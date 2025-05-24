@@ -13,18 +13,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id            String    @id @default(cuid())
+  email         String    @unique
   emailVerified DateTime?
-  username  String?   @unique
-  name      String?
-  password  String?
-  image    String?
-  role UserRole @default(USER)
+  username      String?   @unique
+  name          String?
+  password      String?
+  image         String?
+  role          UserRole  @default(USER)
 
-  accounts Account[]
+  accounts          Account[]
+  resumes           Resume[]
+  jobDescriptions   JobDescription[]
+  interviewSessions InterviewSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -56,46 +58,112 @@ model Account {
   @@id([provider, providerAccountId])
 }
 
-// model Session {
-//   sessionToken String   @unique
-//   userId       String
-//   expires      DateTime
-//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
 model VerificationToken {
-  id String @id @default(cuid())
-  email String 
-  token      String @unique
-  expires    DateTime
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
 
   @@unique([email, token])
 }
 
 model PasswordResetToken {
-  id String @id @default(cuid())
-  email String 
-  token      String @unique
-  expires    DateTime
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
 
   @@unique([email, token])
 }
 
-// Optional for WebAuthn support
-// model Authenticator {
-//   credentialID         String  @unique
-//   userId               String
-//   providerAccountId    String
-//   credentialPublicKey  String
-//   counter              Int
-//   credentialDeviceType String
-//   credentialBackedUp   Boolean
-//   transports           String?
+model Resume {
+  id                String             @id @default(uuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  fileName          String
+  fileUrl           String?
+  parsedData        Json
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  interviewSessions InterviewSession[]
+}
 
-//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model JobDescription {
+  id                String             @id @default(uuid())
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  title             String
+  description       String
+  parsedData        Json
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  interviewSessions InterviewSession[]
+}
 
-//   @@id([userId, credentialID])
-// }
+enum InterviewType {
+  TECHNICAL
+  BEHAVIORAL
+  SITUATIONAL
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum InterviewStatus {
+  STARTED
+  COMPLETED
+  ABANDONED
+}
+
+model InterviewSession {
+  id               String          @id @default(uuid())
+  userId           String
+  user             User            @relation(fields: [userId], references: [id])
+  resumeId         String?
+  resume           Resume?         @relation(fields: [resumeId], references: [id])
+  jobDescriptionId String?
+  jobDescription   JobDescription? @relation(fields: [jobDescriptionId], references: [id])
+  interviewType    InterviewType   @default(TECHNICAL) // Enum: "technical", "behavioral", "situational"
+  difficulty       Difficulty // Enum: "beginner", "intermediate", "advanced"
+  status           InterviewStatus @default(STARTED) // Enum: "started", "completed", "abandoned"
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  questions        Question[]
+  responses        Response[]
+}
+
+model Question {
+  id        String           @id @default(uuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id])
+  text      String
+  type      String // Enum: "technical", "behavioral", "situational"
+  order     Int
+  createdAt DateTime         @default(now())
+  response  Response?
+}
+
+model Response {
+  id           String           @id @default(uuid())
+  questionId   String           @unique
+  question     Question         @relation(fields: [questionId], references: [id])
+  sessionId    String
+  session      InterviewSession @relation(fields: [sessionId], references: [id])
+  responseType String // Enum: "text", "voice", "video"
+  content      String?
+  fileUrl      String?
+  createdAt    DateTime         @default(now())
+  feedback     Feedback?
+}
+
+model Feedback {
+  id         String   @id @default(uuid())
+  responseId String   @unique
+  response   Response @relation(fields: [responseId], references: [id])
+  content    String
+  score      Int?
+  createdAt  DateTime @default(now())
+}

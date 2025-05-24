@@ -1,6 +1,6 @@
 "use server";
 
-import prisma from "@/prisma";
+import prisma from "@/config/prisma.config";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/auth";

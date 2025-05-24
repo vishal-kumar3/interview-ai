@@ -4,7 +4,7 @@ import { getUserByEmail } from "@/data/user"
 import { getPasswordResetTokenByToken, getVerificationTokenByToken } from "@/data/verification-token"
 import { sendPasswordResetEmail } from "@/lib/nodemailer"
 import { generatePasswordResetToken } from "@/lib/token"
-import prisma from "@/prisma"
+import prisma from "@/config/prisma.config"
 import bcrypt from "bcryptjs"
 
 export const userEmailVerification = async (token: string) => {

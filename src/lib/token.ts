@@ -1,6 +1,6 @@
 import { getUserByEmail } from '@/data/user';
 import { getPasswordResetTokenByEmail, getVerificationTokenByEmail } from '@/data/verification-token';
-import prisma from '@/prisma';
+import prisma from '@/config/prisma.config';
 import  { v4 as uuidv4 } from 'uuid'
 
 export const generateVerificationToken = async (email: string) => {
@@ -41,7 +41,7 @@ export const generatePasswordResetToken = async (email: string) => {
         id: existingToken.id
       }
     }).catch(error => null)
-    
+
     if(!deleteToken){
       console.log('token.ts: generatePasswordResetToken: Error deleting password reset token')
       return { error: 'Something went wrong!'}

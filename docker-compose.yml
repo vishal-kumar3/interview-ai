@@ -1,14 +1,14 @@
-version: '3'
 
 services:
   database:
     image: 'postgres:latest'
+    container_name: 'mock-interview-db'
     ports:
       - '5432:5432'
     environment:
       POSTGRES_USER: vishal
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: devcord
+      POSTGRES_PASSWORD: vishal
+      POSTGRES_DB: interview
     networks:
       - postgres-network
     volumes:

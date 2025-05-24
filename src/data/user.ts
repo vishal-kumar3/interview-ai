@@ -1,4 +1,4 @@
-import prisma from "@/prisma";
+import prisma from "@/config/prisma.config";
 
 export const getUserByEmail = async (email: string) => {
   if(!email) return null;

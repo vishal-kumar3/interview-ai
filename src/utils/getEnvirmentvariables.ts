@@ -37,7 +37,7 @@ export const getAuthGithubClientSecret = () => {
 export const getGithubOAuthCallback = () => {
   if (!process.env.AUTH_GITHUB_CALLBACK) {
     throw new Error("AUTH_GITHUB_CALLBACK is not defined");
-  } 
+  }
   return process.env.AUTH_GITHUB_CALLBACK;
 }
 
@@ -54,13 +54,6 @@ export const getAuthGoogleClientSecret = () => {
   } else {
     throw new Error("AUTH_GOOGLE_CLIENT_SECRET is not defined");
   }
-}
-
-export const getGoogleOAuthCallback = () => {
-  if (!process.env.AUTH_GOOGLE_CALLBACK) {
-    throw new Error("AUTH_GOOGLE_CALLBACK is not defined");
-  } 
-  return process.env.AUTH_GOOGLE_CALLBACK;
 }
 
 
