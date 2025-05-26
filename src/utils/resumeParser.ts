@@ -1,29 +1,53 @@
+import { createAiCompletion } from "@/config/ai.config";
+import { resumeParserPrompt } from "@/lib/prompt";
+import { resumeParseJsonSchema } from "@/schema/resume.schema";
 import { execSync } from "child_process";
 
 
 
-async function parseResumeWithGrok(text: string): Promise<any> {
-  const prompt = `Given the following resume text, extract structured data in JSON format with fields: name, email, phone, skills, education, workExperience.
+export async function parseResumeWithAi(text: string): Promise<any> {
+  const prompt = `${resumeParserPrompt}.
   Resume Text: ${text}`
 
-  // grok api call
+  try {
+    const response = await createAiCompletion(
+      [
+        {
+          role: "system",
+          content: "You are a resume parsing assistant that extracts structured information from resumes."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      resumeParseJsonSchema,
+      "resumeParseResponse"
+    )
 
-  return {}
+    return response;
+  } catch (error) {
+    console.error("Error parsing resume with AI:", error);
+    throw new Error("Failed to parse resume with AI.");
+  }
 }
 
 
-const extractTextFromPDF = async (filePath: string): Promise<string> => {
+export const extractTextFromPDF = async (filePath: string): Promise<string> => {
   try {
+    const escapedFilePath = filePath.replace(/'/g, "\\'");
+
     const text = execSync(
       `python -c "
-      import pdfplumber
-      with pdfplumber.open('${filePath}') as pdf:
-      text = ''
-      for page in pdf.pages:
+import pdfplumber
+with pdfplumber.open('${escapedFilePath}') as pdf:
+    text = ''
+    for page in pdf.pages:
         text += page.extract_text() or ''
-      print(text)
-      "`
+    print(text)
+"`
     ).toString();
+
     return text;
   } catch (error) {
     throw new Error('Failed to extract text from PDF');

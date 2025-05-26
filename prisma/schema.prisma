@@ -126,9 +126,9 @@ model InterviewSession {
   resume           Resume?         @relation(fields: [resumeId], references: [id])
   jobDescriptionId String?
   jobDescription   JobDescription? @relation(fields: [jobDescriptionId], references: [id])
-  interviewType    InterviewType   @default(TECHNICAL) // Enum: "technical", "behavioral", "situational"
-  difficulty       Difficulty // Enum: "beginner", "intermediate", "advanced"
-  status           InterviewStatus @default(STARTED) // Enum: "started", "completed", "abandoned"
+  interviewType    InterviewType   @default(TECHNICAL)
+  difficulty       Difficulty
+  status           InterviewStatus @default(STARTED)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   questions        Question[]
@@ -140,7 +140,7 @@ model Question {
   sessionId String
   session   InterviewSession @relation(fields: [sessionId], references: [id])
   text      String
-  type      String // Enum: "technical", "behavioral", "situational"
+  type      InterviewType
   order     Int
   createdAt DateTime         @default(now())
   response  Response?
@@ -152,7 +152,7 @@ model Response {
   question     Question         @relation(fields: [questionId], references: [id])
   sessionId    String
   session      InterviewSession @relation(fields: [sessionId], references: [id])
-  responseType String // Enum: "text", "voice", "video"
+  responseType String
   content      String?
   fileUrl      String?
   createdAt    DateTime         @default(now())
