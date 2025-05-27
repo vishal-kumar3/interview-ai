@@ -19,7 +19,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
-import { uploadJobDescription } from "@/app/actions/file-action"
 
 const formSchema = z.object({
   title: z.string().min(1, "Please enter the job title"),
@@ -57,7 +56,7 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
       formData.append("title", data.title)
       formData.append("company", data.company)
 
-      const result = await uploadJobDescription(formData)
+      const result = {success: false, message: "nope"}
       if (result.success) {
         toast.success(result.message)
         setOpen(false)

@@ -1,6 +1,6 @@
-import { createAiCompletion } from "@/config/ai.config";
+import { createGenAIText } from "@/config/gemini.config";
 import { resumeParserPrompt } from "@/lib/prompt";
-import { resumeParseJsonSchema } from "@/schema/resume.schema";
+import { resumeParseJsonSchema, resumeReponseSchema } from "@/schema/resume.schema";
 import { execSync } from "child_process";
 
 
@@ -10,22 +10,18 @@ export async function parseResumeWithAi(text: string): Promise<any> {
   Resume Text: ${text}`
 
   try {
-    const response = await createAiCompletion(
-      [
-        {
-          role: "system",
-          content: "You are a resume parsing assistant that extracts structured information from resumes."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      resumeParseJsonSchema,
-      "resumeParseResponse"
+    const response = await createGenAIText(
+      `Resume Text as base64: ${text}`,
+      resumeParserPrompt,
+      resumeReponseSchema
     )
 
-    return response;
+    if (!response?.parts) throw new Error("No response parts found from AI");
+
+    const parsedResponse = JSON.parse(response.parts[0].text as string)
+    // const validation = resumeParseJsonSchema.safeParse(parsedResponse);
+    console.log(parsedResponse)
+    return parsedResponse;
   } catch (error) {
     console.error("Error parsing resume with AI:", error);
     throw new Error("Failed to parse resume with AI.");
@@ -36,7 +32,7 @@ export async function parseResumeWithAi(text: string): Promise<any> {
 export const extractTextFromPDF = async (filePath: string): Promise<string> => {
   try {
     const escapedFilePath = filePath.replace(/'/g, "\\'");
-
+    // wip: isse achha ek python server use krle
     const text = execSync(
       `python -c "
 import pdfplumber

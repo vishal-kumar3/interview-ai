@@ -1,6 +1,7 @@
 
 
 import { z } from 'zod';
+import { SchemaUnion, Type } from '@google/genai'
 
 // Define the schema for personal details
 const personalDetailsSchema = z.object({
@@ -47,7 +48,7 @@ const skillsSchema = z.object({
 // Define the schema for a single project entry
 const projectSchema = z.object({
   project_name: z.string().nullable(),
-  description: z.string().nullable(),
+  description: z.array(z.string()).nullable(),
   technologies_used: z.array(z.string()).nullable(),
   project_url: z.string().url().nullable(), // Added .url()
 }).partial();
@@ -78,5 +79,139 @@ export const resumeParseJsonSchema = z.object({
   achievements: z.array(achievementsSchema).nullable(),
   languages: z.array(z.string()).nullable(),
 });
+
+export const resumeReponseSchema: SchemaUnion = {
+  "type": Type.OBJECT,
+    "properties": {
+    "personal_details": {
+      "type": Type.OBJECT,
+        "properties": {
+        "name": { "type": Type.STRING },
+        "email": { "type": Type.STRING },
+        "contact_number": { "type": Type.STRING },
+        "linkedin_profile": { "type": Type.STRING },
+        "portfolio_website": { "type": Type.STRING },
+        "location": { "type": Type.STRING }
+      },
+      "required": []
+    },
+    "summary_or_objective": { "type": Type.STRING },
+    "work_experience": {
+      "type": Type.ARRAY,
+        "items": {
+        "type": Type.OBJECT,
+          "properties": {
+          "job_title": { "type": Type.STRING },
+          "company_name": { "type": Type.STRING },
+          "location": { "type": Type.STRING },
+          "start_date": { "type": Type.STRING },
+          "end_date": { "type": Type.STRING },
+          "responsibilities": {
+            "type": Type.ARRAY,
+              "items": { "type": Type.STRING }
+          }
+        },
+        "required": []
+      }
+    },
+    "education": {
+      "type": Type.ARRAY,
+        "items": {
+        "type": Type.OBJECT,
+          "properties": {
+          "degree": { "type": Type.STRING },
+          "major": { "type": Type.STRING },
+          "university": { "type": Type.STRING },
+          "location": { "type": Type.STRING },
+          "graduation_date": { "type": Type.STRING },
+          "gpa": { "type": Type.STRING }
+        },
+        "required": []
+      }
+    },
+    "skills": {
+      "type": Type.OBJECT,
+        "properties": {
+        "programming_languages": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "frameworks_libraries": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "databases": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "tools": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "cloud_platforms": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "operating_systems": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        },
+        "other_skills": {
+          "type": Type.ARRAY,
+            "items": { "type": Type.STRING }
+        }
+      },
+      "required": []
+    },
+    "projects": {
+      "type": Type.ARRAY,
+        "items": {
+        "type": Type.OBJECT,
+          "properties": {
+          "project_name": { "type": Type.STRING },
+            "description": {
+              "type": Type.ARRAY,
+              "items": { "type": Type.STRING }
+            },
+          "technologies_used": {
+            "type": Type.ARRAY,
+              "items": { "type": Type.STRING }
+          },
+          "project_url": { "type": Type.STRING }
+        },
+        "required": []
+      }
+    },
+    "certifications": {
+      "type": Type.ARRAY,
+        "items": {
+        "type": Type.OBJECT,
+          "properties": {
+          "certification_name": { "type": Type.STRING },
+          "issuing_organization": { "type": Type.STRING },
+          "date_obtained": { "type": Type.STRING }
+        },
+        "required": []
+      }
+    },
+    "achievements": {
+      "type": Type.ARRAY,
+        "items": {
+        "type": Type.OBJECT,
+          "properties": {
+          "name": { "type": Type.STRING },
+          "issuing_organization": { "type": Type.STRING },
+          "description": { "type": Type.STRING }
+        },
+        "required": []
+      }
+    },
+    "languages": {
+      "type": Type.ARRAY,
+        "items": { "type": Type.STRING }
+    }
+  },
+  "required": []
+}
 
 export type ResumeParseJson = z.infer<typeof resumeParseJsonSchema>;

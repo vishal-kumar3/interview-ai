@@ -15,28 +15,26 @@ export const saveFileToLocal = async (file: File) => {
 }
 
 
-export const uploadFileToS3 = async (filePath: string, fileName: string): Promise<string> => {
+export const uploadFileToS3 = async (filePath: string, fileName: string): Promise<{fileUrl: string, key: string}> => {
   try {
-    const bucketName = process.env.S3_BUCKET;
-
-    if (!bucketName) {
-      throw new Error("S3_BUCKET is not defined in the environment variables.");
-    }
+    const bucketName = process.env.S3_BUCKET!;
+    const key = `resume/${Date.now()}-${fileName}`;
 
     const fileContent = fs.readFileSync(filePath);
 
     const uploadParams = {
       Bucket: bucketName,
-      Key: `resume/ {fileName}`,
+      Key: key,
       Body: fileContent,
       ContentType: 'application/pdf',
     };
 
     const command = new PutObjectCommand(uploadParams);
+    console.log("command: ", command)
     await s3Client.send(command);
 
-    const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
-    return fileUrl;
+    const fileUrl = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    return {fileUrl, key};
   } catch (error) {
     console.error("Error uploading file to S3:", error);
     throw new Error("Failed to upload file to S3.");

@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Building, Download, Eye, MoreHorizontal, Trash2, Calendar, HardDrive, Upload, Tag } from "lucide-react"
 import { toast } from "sonner"
-import { deleteJobDescription } from "@/app/actions/file-action"
 import { formatFileSize } from "@/utils/formatFileSize"
 
 export function JobDescriptionsList() {
@@ -59,7 +58,7 @@ export function JobDescriptionsList() {
 
   const handleDelete = async (jobDescriptionId: string) => {
     try {
-      const result = await deleteJobDescription(jobDescriptionId)
+      const result = { success: true, message: "deleted" }
       if (result.success) {
         toast.success(result.message)
       }
