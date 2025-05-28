@@ -6,12 +6,9 @@ import { execSync } from "child_process";
 
 
 export async function parseResumeWithAi(text: string): Promise<any> {
-  const prompt = `${resumeParserPrompt}.
-  Resume Text: ${text}`
-
   try {
     const response = await createGenAIText(
-      `Resume Text as base64: ${text}`,
+      `Resume Text: ${text}`,
       resumeParserPrompt,
       resumeReponseSchema
     )

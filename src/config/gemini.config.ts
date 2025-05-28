@@ -31,7 +31,7 @@ export const createGenAIText = async (messages: string, systemInstruction: strin
     contents: messages,
     config: {
       systemInstruction: systemInstruction,
-      responseMimeType: "application/json",
+      responseMimeType: responseSchema ? "application/json" : "text/plain",
       responseSchema: responseSchema,
     },
   });

@@ -1,11 +1,29 @@
 import { Suspense } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building, Upload, FileText, TrendingUp } from "lucide-react"
 import { UploadJobDescriptionModal } from "@/components/jobDescription/uploadJobDescriptionModal"
 import { JobDescriptionsSkeleton } from "@/components/jobDescription/jobDescriptionSkeleton"
 import { JobDescriptionsList } from "@/components/jobDescription/jobDescriptionList"
+import { auth } from "@/auth"
+import prisma from "@/config/prisma.config"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default async function JobDescriptionsPage() {
+  const session = await auth()
+  if (!session) {
+    return (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-gray-600">Please log in to view job descriptions.</p>
+      </div>
+    )
+  }
+
+  const jobDescriptions = await prisma.jobDescription.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+  }) ?? []
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Hero Section */}
@@ -87,33 +105,33 @@ export default async function JobDescriptionsPage() {
             </div>
 
             <Suspense fallback={<JobDescriptionsSkeleton />}>
-              <JobDescriptionsList />
+              <JobDescriptionsList jobDescriptions={jobDescriptions} />
             </Suspense>
           </div>
 
           {/* Quick Actions Sidebar */}
           <div className="space-y-6">
             <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-              <CardContent className="p-6">
-                <h3 className="flex items-center gap-2 text-gray-900 font-semibold mb-4">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-gray-900">
                   <Upload className="h-5 w-5 text-teal-600" />
                   Quick Actions
-                </h3>
-                <div className="space-y-3">
-                  <UploadJobDescriptionModal variant="sidebar" />
-                  <button className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">Back to Dashboard</span>
-                    </div>
-                  </button>
-                  <button className="w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">Manage Resumes</span>
-                    </div>
-                  </button>
-                </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <UploadJobDescriptionModal variant="sidebar" />
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/dashboard">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Back to Dashboard
+                  </Link>
+                </Button>
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link href="/resumes">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Manage Resumes
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
 

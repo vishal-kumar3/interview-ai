@@ -1,18 +1,8 @@
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { FileText, Download, Eye, MoreHorizontal, Trash2, Star, Calendar, HardDrive, Upload } from "lucide-react"
 import prisma from "@/config/prisma.config"
 import { auth } from "@/auth"
@@ -48,7 +38,6 @@ export async function ResumesList() {
                     {false && (
                       <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
                         <Star className="h-3 w-3 mr-1" />
-                        {/* // todo: isDefault in resume */}
                         Default
                       </Badge>
                     )}
@@ -61,7 +50,6 @@ export async function ResumesList() {
                     </span>
                     <span className="flex items-center gap-1">
                       <HardDrive className="h-4 w-4" />
-                      {/* // todo: FileSize in resume */}
                       30KB
                     </span>
                   </div>

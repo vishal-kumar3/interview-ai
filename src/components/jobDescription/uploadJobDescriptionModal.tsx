@@ -14,19 +14,27 @@ import {
 } from "@/components/ui/dialog"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Upload, Building, X, CheckCircle } from "lucide-react"
+import { Upload, Building, X, CheckCircle, Sparkles } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
+import { generateJobDescription, uploadJobDescription } from "@/actions/jobDescription.action"
+import { Textarea } from "@/components/ui/textarea"
 
-const formSchema = z.object({
+const jobDescriptionFormSchema = z.object({
   title: z.string().min(1, "Please enter the job title"),
-  company: z.string().min(1, "Please enter the company name"),
-  file: z.instanceof(File).refine((file) => file.size > 0, "Please select a file"),
+  company: z.string().optional(),
+  file: z.instanceof(File).optional(),
+  description: z.string().optional().refine(val => val && val?.length === 0 || val && val?.length > 0, {
+    message: "Please enter a job description if not uploading a file",
+  }),
+}).refine((data) => data.file || (data.description && data.description.length > 0), {
+  message: "Please either upload a file or enter a job description",
+  path: ["description"]
 })
 
-type FormData = z.infer<typeof formSchema>
+type FormData = z.infer<typeof jobDescriptionFormSchema>
 
 interface UploadJobDescriptionModalProps {
   variant?: "default" | "sidebar"
@@ -38,25 +46,33 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [loadingGenerateWithAI, setLoadingGenerateWithAI] = useState(false)
+
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(jobDescriptionFormSchema),
     defaultValues: {
       title: "",
       company: "",
     },
+    reValidateMode: "onChange",
   })
 
   const selectedFile = form.watch("file")
+  const selectedDescription = form.watch("description")
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
       const formData = new FormData()
-      formData.append("file", data.file)
       formData.append("title", data.title)
-      formData.append("company", data.company)
+      formData.append("company", data.company || "")
+      if (data.file) {
+        formData.append("file", data.file)
+      } else if (data.description) {
+        formData.append("description", data.description)
+      }
 
-      const result = {success: false, message: "nope"}
+      const result = await uploadJobDescription(formData)
       if (result.success) {
         toast.success(result.message)
         setOpen(false)
@@ -103,6 +119,27 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
     }
   }
 
+  const generateJobDescriptionButton = async () => {
+    const description = form.getValues("description") as string
+    const title = form.getValues("title")
+    const company = form.getValues("company")
+
+    if (description.length < 15) {
+      return form.setError("description", {
+        type: "manual",
+        message: "Please enter a more detailed job description.",
+      })
+    }
+
+    setLoadingGenerateWithAI(true)
+    const gen_description = await generateJobDescription(description, title, company)
+    if (gen_description.error) {
+      return toast.error(gen_description.error)
+    }
+    form.setValue("description", gen_description.data ?? "")
+    setLoadingGenerateWithAI(false)
+  }
+
   const triggerButton =
     variant === "sidebar" ? (
       <Button className="w-full justify-start bg-teal-600 hover:bg-teal-700 text-white">
@@ -119,7 +156,7 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[92%] overflow-y-scroll">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Building className="h-6 w-6 text-teal-600" />
@@ -162,6 +199,46 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
               )}
             />
 
+            {/* Job Description */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Job Description</FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!selectedDescription || selectedDescription.length === 0 || !!selectedFile}
+                      onClick={generateJobDescriptionButton}
+                    >
+                      {/* if loadingGenerateWithAI is true replace this sparkle with loading else sparkle */}
+                      {loadingGenerateWithAI ? (
+                        <div className="animate-spin h-5 w-5 border-2 border-yellow-500 border-t-transparent rounded-full mr-2"></div>
+                      ) :
+                        <Sparkles className="h-5 w-5 mr-2 text-yellow-500" />
+                      }
+                      Generate With AI
+                    </Button>
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      disabled={!!selectedFile}
+                      placeholder={"Write short description and use AI to generate a full job description..."}
+                      className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter job description text as an alternative to file upload.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {/* File Upload Area */}
             <FormField
               control={form.control}
@@ -171,11 +248,12 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
                   <FormLabel>Job Description File</FormLabel>
                   <FormControl>
                     <div
-                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragActive
-                          ? "border-teal-500 bg-teal-50"
-                          : selectedFile
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-300 hover:border-gray-400"
+                      aria-disabled={!!selectedDescription && selectedDescription?.length > 0}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${dragActive
+                        ? "border-teal-500 bg-teal-50"
+                        : selectedFile
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-300 hover:border-gray-400"
                         }`}
                       onDragEnter={handleDrag}
                       onDragLeave={handleDrag}
@@ -183,6 +261,7 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
                       onDrop={handleDrop}
                     >
                       <input
+                        disabled={!!selectedDescription && selectedDescription?.length > 0}
                         ref={fileInputRef}
                         type="file"
                         accept=".pdf"
@@ -213,7 +292,7 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
                             <p className="text-lg font-medium text-gray-700">Drop job description here</p>
                             <p className="text-sm text-gray-500">or click to browse files</p>
                           </div>
-                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                          <Button type="button" variant="outline" disabled={!!selectedDescription && selectedDescription?.length > 0} className="disabled:cursor-not-allowed disabled:opacity-50" onClick={() => fileInputRef.current?.click()}>
                             Choose File
                           </Button>
                           <p className="text-xs text-gray-400">PDF files only, max 10MB</p>
@@ -232,7 +311,7 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || !selectedFile}
+                disabled={isLoading || (!selectedFile && !form.watch("description"))}
                 className="bg-teal-600 hover:bg-teal-700 text-white min-w-[120px]"
               >
                 {isLoading ? (

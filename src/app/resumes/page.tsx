@@ -5,6 +5,7 @@ import { FileText, Upload, Users, TrendingUp } from "lucide-react"
 import { UploadResumeModal } from "@/components/resume/uploadResumeModal"
 import { ResumesSkeleton } from "@/components/resume/resumeSkeleton"
 import { ResumesList } from "@/components/resume/resumeList"
+import Link from "next/link"
 
 export default async function ResumesPage() {
   return (
@@ -102,16 +103,16 @@ export default async function ResumesPage() {
               <CardContent className="space-y-3">
                 <UploadResumeModal variant="sidebar" />
                 <Button variant="outline" className="w-full justify-start" asChild>
-                  <a href="/dashboard">
+                  <Link href="/dashboard">
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Back to Dashboard
-                  </a>
+                  </Link>
                 </Button>
                 <Button variant="outline" className="w-full justify-start" asChild>
-                  <a href="/job-descriptions">
+                  <Link href="/job-descriptions">
                     <FileText className="h-4 w-4 mr-2" />
                     Job Descriptions
-                  </a>
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

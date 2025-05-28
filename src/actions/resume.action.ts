@@ -8,6 +8,60 @@ import { saveFileToLocal, uploadFileToS3 } from "@/utils/uploadResume";
 import { revalidatePath } from "next/cache";
 
 
+export const updateResume = async (resumeId: string, data: any) => {
+  const session = await auth();
+
+  if (!session?.user) {
+    return {
+      error: "Unauthorized access. Please log in to update your resume.",
+      data: null,
+    }
+  }
+
+  const resume = await prisma.resume.findUnique({
+    where: {
+      id: resumeId
+    }
+  })
+  if (!resume) {
+    return {
+      error: "Resume not found",
+      data: null,
+    }
+  }
+
+  if (resume.userId !== session.user.id) {
+    return {
+      error: "Unauthorized access. You do not have permission to update this resume.",
+      data: null,
+    }
+  }
+
+  const updatedResume = await prisma.resume.update({
+    where: {
+      id: resumeId,
+      userId: session.user.id,
+    },
+    data: {
+      fileName: data.fileName || resume.fileName,
+      fileUrl: data.fileUrl || resume.fileUrl,
+      parsedData: data.parsedData || resume.parsedData,
+    },
+  })
+  if (!updatedResume) {
+    return {
+      error: "Failed to update resume",
+      data: null,
+    }
+  }
+
+  revalidatePath("/resumes");
+  return {
+    success: true,
+    message: "Resume updated successfully!",
+  }
+}
+
 export async function uploadResume(formData: FormData) {
   const session = await auth()
 
