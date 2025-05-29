@@ -8,8 +8,8 @@ const personalDetailsSchema = z.object({
   name: z.string().nullable(),
   email: z.string().email().nullable(), // Added .email() for basic email validation
   contact_number: z.string().nullable(),
-  linkedin_profile: z.string().url().nullable(), // Added .url() for basic URL validation
-  portfolio_website: z.string().url().nullable(), // Added .url() for basic URL validation
+  linkedin_profile: z.string().nullable(), // Added .url() for basic URL validation
+  portfolio_website: z.string().nullable(), // Added .url() for basic URL validation
   location: z.string().nullable(),
 }).partial(); // .partial() makes all fields optional initially, then we can refine if needed.
 // For a resume parser, it's safer to assume fields might be missing.
@@ -50,7 +50,7 @@ const projectSchema = z.object({
   project_name: z.string().nullable(),
   description: z.array(z.string()).nullable(),
   technologies_used: z.array(z.string()).nullable(),
-  project_url: z.string().url().nullable(), // Added .url()
+  project_url: z.string().nullable(), // Added .url()
 }).partial();
 
 // Define the schema for a single certification entry

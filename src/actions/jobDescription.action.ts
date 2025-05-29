@@ -10,6 +10,27 @@ import { saveFileToLocal, uploadFileToS3 } from "@/utils/uploadResume"
 import { revalidatePath } from "next/cache"
 
 
+export const getJobDescriptions = async (userId?: string) => {
+  if (!userId) {
+    const session = await auth()
+    if (!session?.user) {
+      return {
+        error: "Unauthorized access. Please log in to view your job descriptions.",
+        data: null,
+      }
+    }
+    userId = session.user.id!
+  }
+  const jobDescriptions = await prisma.jobDescription.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  })
+  return {
+    data: jobDescriptions,
+    error: null,
+  }
+}
+
 export const updateJobDescription = async (jobDescriptionId: string, data: any) => {
   const session = await auth()
 

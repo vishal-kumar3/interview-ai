@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { toast } from "sonner"
 import { createInterviewSession } from "@/app/actions/interview-actions"
-import { Difficulty, InterviewType } from "@prisma/client"
+import { Difficulty, InterviewType, JobDescription, Resume } from "@prisma/client"
 
 const formSchema = z.object({
   jobDescriptionId: z.string().min(1, "Please select a job description"),
@@ -34,10 +34,16 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface CreateInterviewModalProps {
+  resumes: Resume[]
+  jobDescriptions: JobDescription[]
   variant?: "default" | "sidebar"
 }
 
-export function CreateInterviewModal({ variant = "default" }: CreateInterviewModalProps) {
+export function CreateInterviewModal({
+  resumes,
+  jobDescriptions,
+  variant = "default"
+}: CreateInterviewModalProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -49,18 +55,6 @@ export function CreateInterviewModal({ variant = "default" }: CreateInterviewMod
       notes: "",
     },
   })
-
-  // Mock data - in real app, fetch from server
-  const jobDescriptions = [
-    { id: "1", title: "Senior Frontend Developer", company: "TechCorp" },
-    { id: "2", title: "Product Manager", company: "StartupXYZ" },
-    { id: "3", title: "Data Scientist", company: "DataCorp" },
-  ]
-
-  const resumes = [
-    { id: "1", name: "John Doe Resume" },
-    { id: "2", name: "John Doe Resume (Updated)" },
-  ]
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
@@ -179,7 +173,7 @@ export function CreateInterviewModal({ variant = "default" }: CreateInterviewMod
                     <SelectContent>
                       {resumes.map((resume) => (
                         <SelectItem key={resume.id} value={resume.id}>
-                          {resume.name}
+                          {resume.fileName}
                         </SelectItem>
                       ))}
                     </SelectContent>

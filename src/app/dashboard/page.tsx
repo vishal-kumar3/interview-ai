@@ -7,10 +7,26 @@ import { CreateInterviewModal } from "@/components/dashboard/createInterview"
 import { InterviewsSkeleton } from "@/components/dashboard/interviewSkeleton"
 import { PreviousInterviews } from "@/components/dashboard/previousInterviews"
 import { auth } from "@/auth"
+import { getResumes } from "@/actions/resume.action"
+import { getJobDescriptions } from "@/actions/jobDescription.action"
 
 export default async function DashboardPage() {
 
   const session = await auth()
+
+  if (!session?.user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Unauthorized</h1>
+          <p className="mt-2 text-gray-600">Please log in to access your dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const resumes = await getResumes(session.user.id)
+  const jobDescriptions = await getJobDescriptions(session.user.id)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -57,7 +73,10 @@ export default async function DashboardPage() {
                 <h2 className="text-2xl font-bold text-gray-900">Previous Interviews</h2>
                 <p className="text-gray-600">Review your practice sessions and track progress</p>
               </div>
-              <CreateInterviewModal />
+              <CreateInterviewModal
+                resumes={resumes.data ?? []}
+                jobDescriptions={jobDescriptions.data ?? []}
+              />
             </div>
 
             <Suspense fallback={<InterviewsSkeleton />}>
@@ -75,7 +94,11 @@ export default async function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <CreateInterviewModal variant="sidebar" />
+                <CreateInterviewModal
+                  resumes={resumes.data ?? []}
+                  jobDescriptions={jobDescriptions.data ?? []}
+                  variant="sidebar"
+                />
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <a href="/resumes">
                     <Briefcase className="h-4 w-4 mr-2" />

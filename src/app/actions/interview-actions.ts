@@ -82,15 +82,6 @@ export async function getInterviewSessions() {
   return mockInterviews
 }
 
-export async function getJobDescriptions() {
-  await new Promise((resolve) => setTimeout(resolve, 100))
-  return mockJobDescriptions
-}
-
-export async function getResumes() {
-  await new Promise((resolve) => setTimeout(resolve, 100))
-  return mockResumes
-}
 
 export async function createInterviewSession(formData: FormData) {
   const jobDescriptionId = formData.get("jobDescriptionId") as string

@@ -1,131 +1,186 @@
-"use server"
+"use server";
 
 import { auth } from "@/auth";
 import prisma from "@/config/prisma.config";
-import { deleteFileFromS3, previewFile } from "@/config/s3.config"
+import { deleteFileFromS3, previewFile } from "@/config/s3.config";
 import { extractTextFromPDF, parseResumeWithAi } from "@/utils/resumeParser";
 import { saveFileToLocal, uploadFileToS3 } from "@/utils/uploadResume";
+import { resumeParseJsonSchema } from "@/schema/resume.schema";
 import { revalidatePath } from "next/cache";
 
-
-export const updateResume = async (resumeId: string, data: any) => {
-  const session = await auth();
-
-  if (!session?.user) {
-    return {
-      error: "Unauthorized access. Please log in to update your resume.",
-      data: null,
-    }
-  }
-
-  const resume = await prisma.resume.findUnique({
-    where: {
-      id: resumeId
-    }
-  })
-  if (!resume) {
-    return {
-      error: "Resume not found",
-      data: null,
-    }
-  }
-
-  if (resume.userId !== session.user.id) {
-    return {
-      error: "Unauthorized access. You do not have permission to update this resume.",
-      data: null,
-    }
-  }
-
-  const updatedResume = await prisma.resume.update({
-    where: {
-      id: resumeId,
-      userId: session.user.id,
-    },
-    data: {
-      fileName: data.fileName || resume.fileName,
-      fileUrl: data.fileUrl || resume.fileUrl,
-      parsedData: data.parsedData || resume.parsedData,
-    },
-  })
-  if (!updatedResume) {
-    return {
-      error: "Failed to update resume",
-      data: null,
-    }
-  }
-
-  revalidatePath("/resumes");
-  return {
-    success: true,
-    message: "Resume updated successfully!",
-  }
-}
-
-export async function uploadResume(formData: FormData) {
-  const session = await auth()
-
-  if (!session?.user) {
-    throw new Error("Unauthorized")
-  }
-
-  const file = formData.get("file") as File
-  const name = formData.get("name") as string
-  const isDefault = formData.get("isDefault") === "true"
-
-  // save to local
-  const filePath = await saveFileToLocal(file)
-  const text = await extractTextFromPDF(filePath)
-  console.log("Extracted text from resume:", text)
-  const resumeParseData = await parseResumeWithAi(text)
-  const { fileUrl, key } = await uploadFileToS3(filePath, name ?? file.name)
-  // console.log("Parsed resume data:", resumeParseData)
-  const resume = await prisma.resume.create({
-    data: {
-      fileName: key,
-      fileUrl: fileUrl,
-      parsedData: resumeParseData,
-      user: {
-        connect: {
-          id: session.user.id,
-        },
+export const getResumes = async (userId?: string) => {
+  if (!userId) {
+    const session = await auth();
+    if (!session?.user) {
+      return {
+        error: "Unauthorized access. Please log in to view your resumes.",
+        data: null
       }
     }
-  })
+    userId = session.user.id!;
+  }
 
-  revalidatePath("/resumes")
-  return { success: true, message: "Resume uploaded successfully!" }
+  const resumes = await prisma.resume.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    data: resumes,
+    error: null,
+  }
 }
 
+export const updateResume = async (resumeId: string, data: any) => {
+	const session = await auth();
+
+	if (!session?.user) {
+		return {
+			error: "Unauthorized access. Please log in to update your resume.",
+			success: false,
+		};
+	}
+
+	try {
+		const resume = await prisma.resume.findUnique({
+			where: {
+				id: resumeId,
+			},
+		});
+
+		if (!resume) {
+			return {
+				error: "Resume not found",
+				success: false,
+			};
+		}
+
+		if (resume.userId !== session.user.id) {
+			return {
+				error:
+					"Unauthorized access. You do not have permission to update this resume.",
+				success: false,
+			};
+		}
+
+		// Validate parsedData with Zod schema if provided
+		if (data.parsedData) {
+			try {
+				const validatedParsedData = resumeParseJsonSchema.parse(
+					data.parsedData
+				);
+				data.parsedData = validatedParsedData;
+			} catch (zodError) {
+				console.error("Zod validation error:", zodError);
+				return {
+					error:
+						"Invalid resume data format. Please check your entries and try again.",
+					success: false,
+				};
+			}
+		}
+
+		const updatedResume = await prisma.resume.update({
+			where: {
+				id: resumeId,
+				userId: session.user.id,
+			},
+			data: {
+				fileName: data.fileName || resume.fileName,
+				fileUrl: data.fileUrl || resume.fileUrl,
+				parsedData: data.parsedData || resume.parsedData,
+			},
+		});
+
+		if (!updatedResume) {
+			return {
+				error: "Failed to update resume",
+				success: false,
+			};
+		}
+
+		revalidatePath("/resumes");
+		return {
+			success: true,
+			message: "Resume updated successfully!",
+		};
+	} catch (error) {
+		console.error("Error updating resume:", error);
+		return {
+			error: "An unexpected error occurred while updating the resume.",
+			success: false,
+		};
+	}
+};
+
+export async function uploadResume(formData: FormData) {
+	const session = await auth();
+
+	if (!session?.user) {
+		throw new Error("Unauthorized");
+	}
+
+	const file = formData.get("file") as File;
+	const name = formData.get("name") as string;
+	const isDefault = formData.get("isDefault") === "true";
+
+	// save to local
+	const filePath = await saveFileToLocal(file);
+	const text = await extractTextFromPDF(filePath);
+	console.log("Extracted text from resume:", text);
+	const resumeParseData = await parseResumeWithAi(text);
+	const { fileUrl, key } = await uploadFileToS3(filePath, name ?? file.name);
+	// console.log("Parsed resume data:", resumeParseData)
+	const resume = await prisma.resume.create({
+		data: {
+			fileName: key,
+			fileUrl: fileUrl,
+			parsedData: resumeParseData,
+			user: {
+				connect: {
+					id: session.user.id,
+				},
+			},
+		},
+	});
+
+	revalidatePath("/resumes");
+	return { success: true, message: "Resume uploaded successfully!" };
+}
 
 export const previewResumeByKey = async (key: string) => {
-
-  const signedUrl = await previewFile({ key, expiresIn: 3600 });
-  return signedUrl;
-}
+	const signedUrl = await previewFile({ key, expiresIn: 3600 });
+	return signedUrl;
+};
 
 export const deleteResume = async (resumeId: string) => {
-  const session = await auth();
+	const session = await auth();
 
-  if (!session?.user) throw new Error("Unauthorized access. Please log in to delete your resume.");
+	if (!session?.user)
+		throw new Error(
+			"Unauthorized access. Please log in to delete your resume."
+		);
 
-  const resume = await prisma.resume.delete({
-    where: {
-      id: resumeId,
-      userId: session.user.id,
-    },
-  })
+	const resume = await prisma.resume.delete({
+		where: {
+			id: resumeId,
+			userId: session.user.id,
+		},
+	});
 
-  if (!resume) throw new Error("Resume not found or you do not have permission to delete it.");
+	if (!resume)
+		throw new Error(
+			"Resume not found or you do not have permission to delete it."
+		);
 
-  await deleteResumeByKey(resume.fileName);
-  revalidatePath('/resumes');
-  return !!resume
-}
+	await deleteResumeByKey(resume.fileName);
+	revalidatePath("/resumes");
+	return !!resume;
+};
 
 export const deleteResumeByKey = async (key: string) => {
-  return await deleteFileFromS3(key);
-}
+	return await deleteFileFromS3(key);
+};
 
 /**
 !. Ways to handle cache invalidation
