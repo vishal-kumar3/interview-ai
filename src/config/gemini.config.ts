@@ -5,13 +5,14 @@ const ai = new GoogleGenAI({
 });
 
 
-const history = [
-  {
-    role: ""
-  }
-]
+export type GeminiHistoryType = {
+  role: "user" | "assistant" | "system";
+  parts: {
+    text: string;
+  }[]
+}
 
-export const createGenAIChat = async (messages: any[], systemInstruction: string,responseSchema: any) => {
+export const createGenAIChat = async (messages: GeminiHistoryType[], systemInstruction: string, responseSchema: any) => {
 
   const chat = ai.chats.create({
     model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
@@ -22,6 +23,8 @@ export const createGenAIChat = async (messages: any[], systemInstruction: string
       responseSchema: responseSchema,
     }
   })
+
+  return chat
 }
 
 

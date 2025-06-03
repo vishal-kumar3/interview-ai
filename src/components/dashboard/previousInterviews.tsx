@@ -20,54 +20,22 @@ import {
 import { Eye, Play, Trash2, MoreHorizontal, Filter, Calendar, Briefcase, Target, PlusCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { deleteInterviewSession, resumeInterviewSession } from "@/app/actions/interview-actions"
+import { InterviewSession, InterviewStatus } from "@prisma/client"
 
 // This would normally be a server component, but for demo purposes with interactions, making it client
-export function PreviousInterviews() {
+export function PreviousInterviews({
+  interviews
+}: {
+  interviews: InterviewSession[]
+}) {
   const router = useRouter()
   const [filter, setFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("date")
 
-  // Mock data - in real app, this would come from props or be fetched
-  const interviews = [
-    {
-      id: "1",
-      jobTitle: "Senior Frontend Developer",
-      interviewType: "Technical" as const,
-      difficulty: "Advanced" as const,
-      status: "Completed" as const,
-      createdAt: new Date("2024-01-15"),
-      completionPercentage: 100,
-      jobDescriptionId: "1",
-      resumeId: "1",
-    },
-    {
-      id: "2",
-      jobTitle: "Product Manager",
-      interviewType: "Behavioral" as const,
-      difficulty: "Intermediate" as const,
-      status: "In Progress" as const,
-      createdAt: new Date("2024-01-20"),
-      completionPercentage: 60,
-      jobDescriptionId: "2",
-      resumeId: "1",
-    },
-    {
-      id: "3",
-      jobTitle: "Data Scientist",
-      interviewType: "Technical" as const,
-      difficulty: "Advanced" as const,
-      status: "Not Started" as const,
-      createdAt: new Date("2024-01-22"),
-      completionPercentage: 0,
-      jobDescriptionId: "3",
-      resumeId: "2",
-    },
-  ]
-
   const handleDelete = async (sessionId: string) => {
     try {
-      const result = await deleteInterviewSession(sessionId)
+      // const result = await deleteInterviewSession(sessionId)
+      const result = { success: true, message: "Interview session deleted successfully" } // Mocked result for demo
       if (result.success) {
         toast.success(result.message)
       }
@@ -78,7 +46,8 @@ export function PreviousInterviews() {
 
   const handleResume = async (sessionId: string) => {
     try {
-      const result = await resumeInterviewSession(sessionId)
+      // const result = await resumeInterviewSession(sessionId)
+      const result = { success: true, redirectUrl: `/interview/${sessionId}/resume` } // Mocked result for demo
       if (result.success && result.redirectUrl) {
         router.push(result.redirectUrl)
       }
@@ -163,9 +132,9 @@ export function PreviousInterviews() {
                   <div className="flex items-center gap-3">
                     {getTypeIcon(interview.interviewType)}
                     <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
-                      {interview.jobTitle}
+                      {interview.title}
                     </h3>
-                    {getStatusBadge(interview.status, interview.completionPercentage)}
+                    {getStatusBadge(interview.status, 50)}
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -181,13 +150,13 @@ export function PreviousInterviews() {
                     <span className="capitalize">{interview.interviewType}</span>
                   </div>
 
-                  {interview.status === "In Progress" && (
+                  {interview.status === InterviewStatus.STARTED && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Progress</span>
-                        <span className="font-medium text-teal-600">{interview.completionPercentage}%</span>
+                        <span className="font-medium text-teal-600">{50}%</span>
                       </div>
-                      <Progress value={interview.completionPercentage} className="h-2" />
+                      <Progress value={50} className="h-2" />
                     </div>
                   )}
                 </div>
@@ -203,14 +172,14 @@ export function PreviousInterviews() {
                     View Details
                   </Button>
 
-                  {interview.status !== "Completed" && (
+                  {interview.status !== InterviewStatus.COMPLETED && (
                     <Button
                       size="sm"
                       onClick={() => handleResume(interview.id)}
                       className="bg-teal-600 hover:bg-teal-700 text-white"
                     >
                       <Play className="h-4 w-4 mr-1" />
-                      {interview.status === "Not Started" ? "Start" : "Resume"}
+                      {interview.status === InterviewStatus.ABANDONED ? "Start" : "Resume"}
                     </Button>
                   )}
 
@@ -225,7 +194,7 @@ export function PreviousInterviews() {
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </DropdownMenuItem>
-                      {interview.status !== "Completed" && (
+                      {interview.status !== InterviewStatus.COMPLETED && (
                         <DropdownMenuItem onClick={() => handleResume(interview.id)}>
                           <Play className="h-4 w-4 mr-2" />
                           Resume

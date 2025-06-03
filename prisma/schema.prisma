@@ -119,31 +119,69 @@ enum InterviewStatus {
 }
 
 model InterviewSession {
-  id               String          @id @default(uuid())
+  id               String           @id @default(uuid())
+  title            String
   userId           String
-  user             User            @relation(fields: [userId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
   resumeId         String?
-  resume           Resume?         @relation(fields: [resumeId], references: [id])
+  resume           Resume?          @relation(fields: [resumeId], references: [id])
   jobDescriptionId String?
-  jobDescription   JobDescription? @relation(fields: [jobDescriptionId], references: [id])
-  interviewType    InterviewType   @default(TECHNICAL)
+  jobDescription   JobDescription?  @relation(fields: [jobDescriptionId], references: [id])
+  interviewType    InterviewType    @default(TECHNICAL)
   difficulty       Difficulty
-  status           InterviewStatus @default(STARTED)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  additionalNotes  String?
+  status           InterviewStatus  @default(STARTED)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   questions        Question[]
   responses        Response[]
+  sessionMetadata  SessionMetadata?
+}
+
+model SessionMetadata {
+  id               String           @id @default(uuid())
+  sessionId        String           @unique
+  session          InterviewSession @relation(fields: [sessionId], references: [id])
+  aiInstructions   String
+  aiPromptContext  Json // Store the AI context for consistency
+  focusAreas       String[] // Areas to focus on during interview
+  avoidTopics      String[] // Topics to avoid
+  customSettings   Json? // Custom interview settings
+  conversationFlow Json? // Tracks: question sequences, topic transitions, follow-up patterns, interview phases
+  // Example conversationFlow structure:
+  // {
+  //   "currentPhase": "technical_deep_dive",
+  //   "questionSequence": ["q1_id", "q2_id", "q3_followup_id"],
+  //   "topicTransitions": [
+  //     {"from": "react_basics", "to": "state_management", "reason": "good_understanding"},
+  //     {"from": "state_management", "to": "performance", "reason": "follow_up_needed"}
+  //   ],
+  //   "followUpTriggers": {
+  //     "q2_id": ["incomplete_answer", "mentioned_hooks"],
+  //     "q3_followup_id": ["needs_clarification"]
+  //   },
+  //   "interviewPath": "adaptive" // or "structured"
+  // }
 }
 
 model Question {
-  id        String           @id @default(uuid())
-  sessionId String
-  session   InterviewSession @relation(fields: [sessionId], references: [id])
-  text      String
-  type      InterviewType
-  order     Int
-  createdAt DateTime         @default(now())
-  response  Response?
+  id                 String           @id @default(uuid())
+  sessionId          String
+  session            InterviewSession @relation(fields: [sessionId], references: [id])
+  text               String
+  type               InterviewType
+  parentId           String? // For follow-up questions
+  parent             Question?        @relation("QuestionFollowUp", fields: [parentId], references: [id])
+  followUps          Question[]       @relation("QuestionFollowUp")
+  isFollowUp         Boolean          @default(false)
+  followUpDepth      Int              @default(0) // Track how deep the follow-up chain is
+  difficulty         Difficulty? // Question-specific difficulty
+  topic              String? // e.g., "React", "System Design", "Leadership"
+  aiContext          Json? // Store AI context that led to this question
+  evaluationCriteria String[]
+  followUpTriggers   Json?
+  createdAt          DateTime         @default(now())
+  response           Response?
 }
 
 model Response {
@@ -152,9 +190,12 @@ model Response {
   question     Question         @relation(fields: [questionId], references: [id])
   sessionId    String
   session      InterviewSession @relation(fields: [sessionId], references: [id])
-  responseType String
+  responseType String // "text", "audio", "video"
   content      String?
   fileUrl      String?
+  duration     Int? // response time in seconds
+  confidence   Float? // AI-assessed confidence level
+  keyPoints    Json? // extracted key points from response
   createdAt    DateTime         @default(now())
   feedback     Feedback?
 }

@@ -9,6 +9,7 @@ import { PreviousInterviews } from "@/components/dashboard/previousInterviews"
 import { auth } from "@/auth"
 import { getResumes } from "@/actions/resume.action"
 import { getJobDescriptions } from "@/actions/jobDescription.action"
+import { getInterviewSessions } from "@/actions/interview.action"
 
 export default async function DashboardPage() {
 
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
 
   const resumes = await getResumes(session.user.id)
   const jobDescriptions = await getJobDescriptions(session.user.id)
+  const interviews = await getInterviewSessions(session.user.id!)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -61,7 +63,7 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-7xl px-6 py-8 sm:px-8 lg:px-12">
         {/* Dashboard Stats */}
         <Suspense fallback={<div className="h-32 animate-pulse bg-gray-200 rounded-lg mb-8"></div>}>
-          <DashboardStats />
+          <DashboardStats interviews={interviews.data ?? []} />
         </Suspense>
 
         {/* Main Content */}
@@ -80,7 +82,7 @@ export default async function DashboardPage() {
             </div>
 
             <Suspense fallback={<InterviewsSkeleton />}>
-              <PreviousInterviews />
+              <PreviousInterviews interviews={interviews.data ?? []} />
             </Suspense>
           </div>
 

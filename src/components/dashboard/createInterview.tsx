@@ -18,20 +18,14 @@ import { Label } from "@/components/ui/label"
 import { PlusCircle, FileText, User, Target, Brain, Users, Lightbulb } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { toast } from "sonner"
-import { createInterviewSession } from "@/app/actions/interview-actions"
 import { Difficulty, InterviewType, JobDescription, Resume } from "@prisma/client"
+import { InterviewFormData, interviewFormSchema } from "@/schema/interview.schema"
+import { createInterviewSession } from "@/actions/interview.action"
+import { useRouter } from "next/navigation"
 
-const formSchema = z.object({
-  jobDescriptionId: z.string().min(1, "Please select a job description"),
-  resumeId: z.string().min(1, "Please select a resume"),
-  interviewType: z.enum(Object.values(InterviewType) as [string, ...string[]]),
-  difficulty: z.enum(Object.values(Difficulty) as [string, ...string[]]),
-  notes: z.string().optional(),
-})
 
-type FormData = z.infer<typeof formSchema>
+
 
 interface CreateInterviewModalProps {
   resumes: Resume[]
@@ -46,31 +40,31 @@ export function CreateInterviewModal({
 }: CreateInterviewModalProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<InterviewFormData>({
+    resolver: zodResolver(interviewFormSchema),
     defaultValues: {
-      interviewType: "Technical",
-      difficulty: "Intermediate",
+      interviewType: InterviewType.TECHNICAL,
+      difficulty: Difficulty.INTERMEDIATE,
       notes: "",
     },
+    reValidateMode: "onChange"
   })
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: InterviewFormData) => {
     setIsLoading(true)
+    console.log(data)
     try {
-      const formData = new FormData()
-      Object.entries(data).forEach(([key, value]) => {
-        if (value) formData.append(key, value)
-      })
+      const result = await createInterviewSession(data)
 
-      const result = await createInterviewSession(formData)
       if (result.success) {
+        router.push(`/interview/${result.data.id}`)
         toast.success(result.message)
         setOpen(false)
-        form.reset()
       }
     } catch (error) {
+      console.log(error)
       toast.error("Failed to create interview session")
     } finally {
       setIsLoading(false)
@@ -200,7 +194,10 @@ export function CreateInterviewModal({
                       defaultValue={field.value}
                       className="grid grid-cols-1 gap-4"
                     >
-                      {["Technical", "Behavioral", "Situational"].map((type) => (
+                      {[InterviewType.TECHNICAL,
+                        InterviewType.BEHAVIORAL,
+                        InterviewType.SITUATIONAL
+                      ].map((type) => (
                         <div
                           key={type}
                           className="flex items-center space-x-3 border rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -211,9 +208,9 @@ export function CreateInterviewModal({
                             <div>
                               <div className="font-medium">{type}</div>
                               <div className="text-sm text-gray-500">
-                                {type === "Technical" && "Coding problems, system design, technical concepts"}
-                                {type === "Behavioral" && "Past experiences, soft skills, cultural fit"}
-                                {type === "Situational" && "Hypothetical scenarios, problem-solving approaches"}
+                                {type === InterviewType.TECHNICAL && "Coding problems, system design, technical concepts"}
+                                {type === InterviewType.BEHAVIORAL && "Past experiences, soft skills, cultural fit"}
+                                {type === InterviewType.SITUATIONAL && "Hypothetical scenarios, problem-solving approaches"}
                               </div>
                             </div>
                           </Label>
@@ -243,19 +240,19 @@ export function CreateInterviewModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Beginner">
+                      <SelectItem value={Difficulty.BEGINNER}>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-500"></div>
                           <span>Beginner - Entry level questions</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="Intermediate">
+                      <SelectItem value={Difficulty.INTERMEDIATE}>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
                           <span>Intermediate - Mid-level complexity</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="Advanced">
+                      <SelectItem value={Difficulty.ADVANCED}>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-red-500"></div>
                           <span>Advanced - Senior level challenges</span>
