@@ -5,16 +5,16 @@ import type { ExtendedInterview } from "@/types/interview.types"
 
 interface InterviewHeaderProps {
   interview: ExtendedInterview
-  answeredQuestions: number
-  totalQuestions: number
-  isGeneratingNext: boolean
+  // answeredQuestions: number
+  // totalQuestions: number
+  // isGeneratingNext: boolean
 }
 
 export function InterviewHeader({
   interview,
-  answeredQuestions,
-  totalQuestions,
-  isGeneratingNext
+  // answeredQuestions,
+  // totalQuestions,
+  // isGeneratingNext
 }: InterviewHeaderProps) {
   return (
     <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-2xl border-b border-slate-700">
@@ -63,7 +63,7 @@ export function InterviewHeader({
         </div>
 
         {/* Progress Section */}
-        <div className="mt-3 sm:mt-4 space-y-2">
+        {/* <div className="mt-3 sm:mt-4 space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-slate-300 font-medium">
               Question {answeredQuestions + 1} • AI-Adaptive Interview
@@ -81,7 +81,7 @@ export function InterviewHeader({
               />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

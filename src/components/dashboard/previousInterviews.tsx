@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -21,6 +20,7 @@ import { Eye, Play, Trash2, MoreHorizontal, Filter, Calendar, Briefcase, Target,
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { InterviewSession, InterviewStatus } from "@prisma/client"
+import { deleteInterviewSession } from "@/actions/interview.action"
 
 // This would normally be a server component, but for demo purposes with interactions, making it client
 export function PreviousInterviews({
@@ -34,11 +34,9 @@ export function PreviousInterviews({
 
   const handleDelete = async (sessionId: string) => {
     try {
-      // const result = await deleteInterviewSession(sessionId)
-      const result = { success: true, message: "Interview session deleted successfully" } // Mocked result for demo
-      if (result.success) {
-        toast.success(result.message)
-      }
+      const { error, message } = await deleteInterviewSession(sessionId)
+      if (error) return toast.error(error)
+      return toast.success(message)
     } catch (error) {
       toast.error("Failed to delete interview session")
     }
@@ -149,16 +147,6 @@ export function PreviousInterviews({
                     </span>
                     <span className="capitalize">{interview.interviewType}</span>
                   </div>
-
-                  {interview.status === InterviewStatus.STARTED && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Progress</span>
-                        <span className="font-medium text-teal-600">{50}%</span>
-                      </div>
-                      <Progress value={50} className="h-2" />
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2 ml-4">
@@ -197,34 +185,13 @@ export function PreviousInterviews({
                       {interview.status !== InterviewStatus.COMPLETED && (
                         <DropdownMenuItem onClick={() => handleResume(interview.id)}>
                           <Play className="h-4 w-4 mr-2" />
-                          Resume
+                          {interview.status === InterviewStatus.ABANDONED ? "Start" : "Resume"}
                         </DropdownMenuItem>
                       )}
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Interview Session</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this interview session? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(interview.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <DropdownMenuItem onClick={async() => await handleDelete(interview.id)} className="text-red-600">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

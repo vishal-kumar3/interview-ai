@@ -1,4 +1,4 @@
-import { GoogleGenAI, SchemaUnion } from "@google/genai";
+import { Content, ContentUnion, GoogleGenAI, SchemaUnion } from "@google/genai";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
@@ -12,7 +12,7 @@ export type GeminiHistoryType = {
   }[]
 }
 
-export const createGenAIChat = async (messages: GeminiHistoryType[], systemInstruction: string, responseSchema: any) => {
+export const createGenAIChat = async (messages: GeminiHistoryType[] | Content[], systemInstruction: ContentUnion | string | undefined, responseSchema: any) => {
 
   const chat = ai.chats.create({
     model: process.env.GEMINI_MODEL || "gemini-1.5-flash",

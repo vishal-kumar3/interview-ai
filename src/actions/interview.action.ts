@@ -4,8 +4,9 @@ import { createGenAIChat, GeminiHistoryType } from "@/config/gemini.config";
 import prisma from "@/config/prisma.config";
 import { InterviewFormData } from "@/schema/interview.schema";
 import { AIQuestionSchema, GeminiQuestionUnionSchema } from "@/schema/question.schema";
-import { ExtendedInterview } from "@/types/interview.types";
+import { ExtendedInterview, StandardQuestion } from "@/types/interview.types";
 import { Difficulty, InterviewType, SessionMetadata } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 
 export const createInterviewSession = async (data: InterviewFormData) => {
 
@@ -188,17 +189,20 @@ export const createInterviewChat = async (sessionMetadata: SessionMetadata) => {
 }
 
 export const pushInterviewQuestion = async (interviewId: string, question: AIQuestionSchema) => {
+  let lastQuestion = null
 
-  const lastQuestion = await prisma.question.findFirst({
-    where: {
-      sessionId: interviewId,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+  if (question.isFollowUp) {
+    lastQuestion = await prisma.question.findFirst({
+      where: {
+        sessionId: interviewId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
 
-  const createdQuestion = await prisma.question.create({
+  const createdQuestion: StandardQuestion | null = await prisma.question.create({
     data: {
       sessionId: interviewId,
       text: question.question,
@@ -211,7 +215,28 @@ export const pushInterviewQuestion = async (interviewId: string, question: AIQue
       evaluationCriteria: question.evaluationCriteria,
       followUpTriggers: question.followUpTriggers,
     }
-  })
+  }).catch(err => null)
 
   return createdQuestion
+}
+
+
+export const deleteInterviewSession = async (interviewId: string) => {
+  const deletedSession = await prisma.interviewSession.delete({
+    where: {
+      id: interviewId,
+    },
+  }).catch(err => null)
+  console.log("Deleted session:", deletedSession)
+  if (!deletedSession) {
+    return {
+      error: "Session Not Found",
+      message: "The specified interview session does not exist or does not belong to the user.",
+    }
+  }
+  revalidatePath("/dashboard")
+  return {
+    success: true,
+    message: "Interview session deleted successfully.",
+  }
 }
