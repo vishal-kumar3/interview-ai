@@ -119,23 +119,24 @@ enum InterviewStatus {
 }
 
 model InterviewSession {
-  id               String           @id @default(uuid())
-  title            String
-  userId           String
-  user             User             @relation(fields: [userId], references: [id])
-  resumeId         String?
-  resume           Resume?          @relation(fields: [resumeId], references: [id])
-  jobDescriptionId String?
-  jobDescription   JobDescription?  @relation(fields: [jobDescriptionId], references: [id])
-  interviewType    InterviewType    @default(TECHNICAL)
-  difficulty       Difficulty
-  additionalNotes  String?
-  status           InterviewStatus  @default(STARTED)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  questions        Question[]
-  responses        Response[]
-  sessionMetadata  SessionMetadata?
+  id                String             @id @default(uuid())
+  title             String
+  userId            String
+  user              User               @relation(fields: [userId], references: [id])
+  resumeId          String?
+  resume            Resume?            @relation(fields: [resumeId], references: [id])
+  jobDescriptionId  String?
+  jobDescription    JobDescription?    @relation(fields: [jobDescriptionId], references: [id])
+  interviewType     InterviewType      @default(TECHNICAL)
+  difficulty        Difficulty
+  additionalNotes   String?
+  status            InterviewStatus    @default(STARTED)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  questions         Question[]
+  responses         Response[]
+  sessionMetadata   SessionMetadata?
+  interviewFeedback InterviewFeedback?
 }
 
 model SessionMetadata {
@@ -143,7 +144,7 @@ model SessionMetadata {
   sessionId        String           @unique
   session          InterviewSession @relation(fields: [sessionId], references: [id])
   aiInstructions   String
-  aiPromptContext  Json // Store the AI context for consistency
+  aiPromptContext  Json[] // Store the AI context for consistency
   focusAreas       String[] // Areas to focus on during interview
   avoidTopics      String[] // Topics to avoid
   customSettings   Json? // Custom interview settings
@@ -207,4 +208,25 @@ model Feedback {
   content    String
   score      Int?
   createdAt  DateTime @default(now())
+}
+
+enum HireRecommendation {
+  STRONGLY_RECOMMEND
+  RECOMMEND
+  NEUTRAL
+  DO_NOT_RECOMMEND
+}
+
+model InterviewFeedback {
+  id                 String             @id @default(uuid())
+  sessionId          String             @unique
+  session            InterviewSession   @relation(fields: [sessionId], references: [id])
+  overallScore       Int?
+  feedback           String
+  hireRecommendation HireRecommendation
+  strengths          String[]
+  weaknesses         String[]
+  improvementAreas   String[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }

@@ -5,8 +5,8 @@ import { createGenAIText } from "@/config/gemini.config"
 import prisma from "@/config/prisma.config"
 import { jobDescriptionParserPrompt } from "@/lib/prompt"
 import { jobDescriptionResponseSchema } from "@/schema/jobDescription.schema"
-import { extractTextFromPDF, parseResumeWithAi } from "@/utils/resumeParser"
-import { saveFileToLocal, uploadFileToS3 } from "@/utils/uploadResume"
+import { extractTextFromPDF } from "@/utils/PDFParser"
+import { saveFileToLocal } from "@/utils/upload"
 import { revalidatePath } from "next/cache"
 
 

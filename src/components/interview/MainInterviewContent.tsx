@@ -40,11 +40,6 @@ const MainInterviewContent = ({
       setIsGenerating(true)
       setError(null)
 
-      if (interview.status === InterviewStatus.COMPLETED) {
-        router.push(`/interview/${interview.id}/review`)
-        return
-      }
-
       const { data, error } = await nextQuestion(interview.id)
       if (error) {
         return setError(error)
@@ -109,15 +104,14 @@ const MainInterviewContent = ({
     <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       <QuestionCard
         question={currentQuestion}
-        // isGenerating={isGenerating}
       />
 
       <InterviewClient
         sessionId={interview.id}
-        initialSession={interview}
-        initialQuestion={currentQuestion}
-        // onNextQuestion={onNextQuestion}
-        // isGeneratingNext={isGenerating}
+        currentSession={interview}
+        currentQuestion={currentQuestion}
+        setQuestion={setCurrentQuestion}
+        generateNextQuestion={generateNextQuestion}
       />
     </div>
   )

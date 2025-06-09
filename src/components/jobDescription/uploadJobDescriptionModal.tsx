@@ -21,6 +21,7 @@ import * as z from "zod"
 import { toast } from "sonner"
 import { generateJobDescription, uploadJobDescription } from "@/actions/jobDescription.action"
 import { Textarea } from "@/components/ui/textarea"
+import { useSearchParams } from "next/navigation"
 
 const jobDescriptionFormSchema = z.object({
   title: z.string().min(1, "Please enter the job title"),
@@ -41,7 +42,9 @@ interface UploadJobDescriptionModalProps {
 }
 
 export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDescriptionModalProps) {
-  const [open, setOpen] = useState(false)
+  const searchParams = useSearchParams()
+
+  const [open, setOpen] = useState(searchParams.get('uploadJobDescription') === 'true' || false)
   const [isLoading, setIsLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)

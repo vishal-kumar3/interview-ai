@@ -10,10 +10,17 @@ import { FileText, Mic, ChevronRight } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { AudioRecording } from "@/hooks/use-audio-recorder"
 import { AudioRecorder } from "./AudioRecorder"
+import { saveBlobToLocal } from "@/utils/upload"
 
 interface ResponseFormProps {
   isSubmitting: boolean
-  onSubmitResponse: (data: { response: string }, audioRecording?: AudioRecording) => void
+  onSubmitResponse: (
+    textResponse: string,
+    audioResponse?: {
+      audio: AudioRecording,
+      filePath: string,
+    }
+  ) => void
   onEndInterview: () => void
 }
 
@@ -28,11 +35,17 @@ export function ResponseForm({ isSubmitting, onSubmitResponse, onEndInterview }:
   })
 
   const handleSubmit = (data: { response: string }) => {
-    onSubmitResponse(data, audioRecording || undefined)
+    onSubmitResponse(data.response)
   }
 
-  const handleAudioSubmit = () => {
-    onSubmitResponse({ response: "" }, audioRecording || undefined)
+  const handleAudioSubmit = async () => {
+    console.log("Submitting audio response:", audioRecording, audioRecording?.blob)
+    const filePath = await saveBlobToLocal(audioRecording?.blob, "")
+    if (!audioRecording || !filePath) {
+      return console.error("No audio recording or file path available")
+    }
+
+    onSubmitResponse("", {audio: audioRecording, filePath: filePath})
   }
 
   return (

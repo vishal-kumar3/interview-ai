@@ -3,7 +3,10 @@ const nextConfig = {
 	experimental: {
 		reactCompiler: {
 			compilationMode: 'annotation',
-		},
+    },
+    serverActions: {
+      bodySizeLimit: '10mb',
+    }
 	},
 };
 

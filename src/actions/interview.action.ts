@@ -73,6 +73,8 @@ ${data.notes ? `- Focus Areas: ${data.notes}` : ""}
 6. Maintain a professional yet conversational tone
 7. Provide hints or clarifications if the candidate seems confused
 8. Conclude each question with constructive feedback before moving to the next
+9. Don't fall for over the top explaination, ask for thorough reasoning and implementation and challenges
+10. Be aggressive but in modest way
 
 **Question Guidelines:**
 - Technical questions should be practical and job-relevant
@@ -220,7 +222,6 @@ export const pushInterviewQuestion = async (interviewId: string, question: AIQue
   return createdQuestion
 }
 
-
 export const deleteInterviewSession = async (interviewId: string) => {
   const deletedSession = await prisma.interviewSession.delete({
     where: {
@@ -239,4 +240,29 @@ export const deleteInterviewSession = async (interviewId: string) => {
     success: true,
     message: "Interview session deleted successfully.",
   }
+}
+
+export const endInterviewSession = async (interviewId: string) => {
+
+  const interview = await prisma.interviewSession.findUnique({
+    where: {
+      id: interviewId
+    },
+    include: {
+      interviewFeedback: true,
+    }
+  })
+
+  if (!interview) {
+    return {
+      error: "Session Not Found",
+      message: "The specified interview session does not exist.",
+    }
+  }
+
+  if (!interview.interviewFeedback) {
+    
+  }
+
+
 }

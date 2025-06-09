@@ -8,22 +8,21 @@ import { auth } from "@/auth"
 import { createInterviewChat, getExtendedInterviewById, pushInterviewQuestion } from "@/actions/interview.action"
 import Link from "next/link"
 import MainInterviewContent from "@/components/interview/MainInterviewContent"
-import { aiQuestionSchema } from "@/schema/question.schema"
 import { createCacheKey, redisCache, RedisCachePrefix } from "@/config/redis.config"
-import { Chat } from "@google/genai"
 
 interface InterviewPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function InterviewPage({ params }: InterviewPageProps) {
   const authSession = await auth()
+  const searchParams = await params
 
   if (!authSession || !authSession.user || !authSession.user.id) {
     return redirect("/auth/login")
   }
 
-  const interviewData = await getExtendedInterviewById(params.id, authSession.user.id)
+  const interviewData = await getExtendedInterviewById(searchParams.id, authSession.user.id)
 
   if (interviewData.error || !interviewData.interview) {
     return (

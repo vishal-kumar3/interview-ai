@@ -5,22 +5,29 @@ import { useSecurity } from "@/hooks/use-security"
 import { useInterview } from "@/hooks/useInterview"
 import { ResponseForm } from "./ResponseForm"
 import { LoadingIndicator } from "./LoadingIndicator"
-import { FeedbackCard } from "./FeedbackCard"
 import { EndInterviewDialog } from "./EndInterviewDialog"
 import type { ExtendedInterview, StandardQuestion } from "@/types/interview.types"
+import { AudioRecording } from "@/hooks/use-audio-recorder"
+import { submitInterviewResponse } from "@/actions/chat.action"
 
 interface InterviewClientProps {
   sessionId: string
-  initialSession: ExtendedInterview
-  initialQuestion: StandardQuestion
+  currentSession: ExtendedInterview
+  currentQuestion: StandardQuestion
+  generateNextQuestion: () => Promise<void>
+  setQuestion: (question: StandardQuestion | null) => void
 }
 
 export function InterviewClient({
   sessionId,
-  initialSession,
-  initialQuestion
+  currentSession,
+  currentQuestion,
+  setQuestion,
 }: InterviewClientProps) {
   const [showEndDialog, setShowEndDialog] = useState(false)
+  const [isGeneratingNext, setIsGeneratingNext] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [closingStatement, setClosingStatement] = useState<string | null>(null)
 
   // Security hook
   const { malpracticeCount } = useSecurity({
@@ -30,20 +37,9 @@ export function InterviewClient({
     },
     onTerminate: () => {
       // terminateSession()
+      console.log("Session terminated due to malpractice")
     },
   })
-
-  // Interview logic hook
-  const {
-    interview,
-    currentQuestion,
-    showFeedback,
-    currentFeedback,
-    isSubmitting,
-    isGeneratingNext,
-    submitResponse,
-    endInterview,
-  } = useInterview(sessionId, initialSession, initialQuestion)
 
   const handleEndInterview = () => {
     setShowEndDialog(true)
@@ -51,12 +47,42 @@ export function InterviewClient({
 
   const confirmEndInterview = async () => {
     setShowEndDialog(false)
-    await endInterview()
+    // await endInterview()
+  }
+
+  const submitResponse = async (textResponse: string, audioResponse?: { audio: AudioRecording, filePath: string }) => {
+    setIsSubmitting(true)
+    setIsGeneratingNext(true)
+    const { error, question, feedback } = await submitInterviewResponse(
+      sessionId,
+      currentQuestion.id,
+      audioResponse ? "audio" : "text",
+      textResponse,
+      audioResponse && {
+        filePath: audioResponse?.filePath,
+        duration: audioResponse?.audio.duration,
+        fileType: audioResponse?.audio.blob.type
+      }
+    )
+
+    if (error) {
+      console.error("Error submitting response:", error)
+    }
+    else if (question) {
+      setQuestion(question)
+    }
+    else {
+      setQuestion(null)
+      setClosingStatement(feedback)
+    }
+
+    setIsSubmitting(false)
+    setIsGeneratingNext(false)
   }
 
   return (
     <>
-      {!showFeedback && !isGeneratingNext && (
+      {!isGeneratingNext && (
         <ResponseForm
           isSubmitting={isSubmitting}
           onSubmitResponse={submitResponse}
@@ -66,8 +92,11 @@ export function InterviewClient({
 
       {isGeneratingNext && <LoadingIndicator />}
 
-      {showFeedback && currentFeedback && (
-        <FeedbackCard feedback={currentFeedback} />
+      {closingStatement && (
+        <div className="closing-statement">
+          <h2>Closing Statement</h2>
+          <p>{closingStatement}</p>
+        </div>
       )}
 
       <EndInterviewDialog

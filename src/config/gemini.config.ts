@@ -1,4 +1,5 @@
-import { Content, ContentUnion, GoogleGenAI, SchemaUnion } from "@google/genai";
+import { audioAnalysisResponseSchema, audioAnalysisSchema, audioAnalysisSystemInstructions } from "@/schema/audio.schema";
+import { Content, ContentUnion, createPartFromUri, createUserContent, GoogleGenAI, SchemaUnion } from "@google/genai";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY
@@ -44,4 +45,54 @@ export const createGenAIText = async (messages: string, systemInstruction: strin
   }
 
   return text.candidates[0].content;
+}
+
+export const transcriptFromAudio = async (filePath: string, fileType: string | undefined) => {
+
+  const uploadedFile = await ai.files.upload({
+    file: filePath,
+    config: {
+      mimeType: fileType || "audio/mpeg",
+    }
+  })
+
+  if (!uploadedFile || !uploadedFile.uri) {
+    return {
+      error: "File upload failed",
+      data: null
+    }
+  }
+
+  const transcript = await ai.models.generateContent({
+    model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+    contents: createUserContent([
+      createPartFromUri(uploadedFile.uri, uploadedFile.mimeType || "audio/mpeg"),
+    ]),
+    config: {
+      systemInstruction: audioAnalysisSystemInstructions,
+      responseMimeType: "application/json",
+      responseSchema: audioAnalysisResponseSchema
+    }
+  })
+
+  if (!transcript || !transcript.text) {
+    return {
+      error: "Transcription failed",
+      data: null
+    }
+  }
+
+  const { error, data } = audioAnalysisSchema.safeParse(JSON.parse(transcript.text));
+
+  if (error || !data) {
+    return {
+      error: "Transcription data is invalid",
+      data: null
+    }
+  }
+
+  return {
+    error: null,
+    data: data
+  }
 }

@@ -88,9 +88,13 @@ export const GeminiQuestionUnionSchema: SchemaUnion = {
         }
       },
       required: ["reasoning", "expectedAnswerDepth", "relatedTopics"]
-    }
+    },
+    endInterview: {
+      type: Type.BOOLEAN,
+      description: "If you want to end the interview?"
+    },
   },
-  required: ["question", "isFollowUp", "type", "estimatedDuration", "keywordsExpected", "evaluationCriteria", "followUpTriggers", "aiContext", "topic"]
+  required: ["question", "isFollowUp", "type", "estimatedDuration", "keywordsExpected", "evaluationCriteria", "followUpTriggers", "aiContext", "topic", "endInterview"]
 }
 
 export const aiQuestionSchema = z.object({
@@ -113,6 +117,7 @@ export const aiQuestionSchema = z.object({
     relatedTopics: z.array(z.string()),
     priorQuestionConnection: z.string().optional(),
   }),
+  endInterview: z.boolean().default(false)
 })
 
 

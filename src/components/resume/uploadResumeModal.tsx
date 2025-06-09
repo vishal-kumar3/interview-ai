@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { useSearchParams } from 'next/navigation';
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,10 +36,13 @@ interface UploadResumeModalProps {
 }
 
 export function UploadResumeModal({ variant = "default" }: UploadResumeModalProps) {
-  const [open, setOpen] = useState(false)
+  const searchParams = useSearchParams();
+
+  const [open, setOpen] = useState(searchParams.get('uploadResume') === 'true' || false)
   const [isLoading, setIsLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(resumeUploadSchema),

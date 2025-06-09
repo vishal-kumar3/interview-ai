@@ -23,6 +23,7 @@ import { Difficulty, InterviewType, JobDescription, Resume } from "@prisma/clien
 import { InterviewFormData, interviewFormSchema } from "@/schema/interview.schema"
 import { createInterviewSession } from "@/actions/interview.action"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 
 
@@ -130,6 +131,16 @@ export function CreateInterviewModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* //TODO: Add some hover effect and bg design  */}
+                      {
+                        jobDescriptions.length === 0 && (
+                          <div>
+                            <Link href="/job-descriptions?uploadJobDescription=true" className="text-gray-500">
+                              No job descriptions available. Please upload one first.
+                            </Link>
+                          </div>
+                        )
+                      }
                       {jobDescriptions.map((job) => (
                         <SelectItem key={job.id} value={job.id}>
                           <div className="flex flex-col">
@@ -165,6 +176,16 @@ export function CreateInterviewModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* //TODO: Add some hover effect and bg design  */}
+                      {
+                        resumes.length === 0 && (
+                          <div>
+                            <Link href="/resumes?uploadResume=true" className="text-gray-500">
+                              No resumes available. Please upload one first.
+                            </Link>
+                          </div>
+                        )
+                      }
                       {resumes.map((resume) => (
                         <SelectItem key={resume.id} value={resume.id}>
                           {resume.fileName}

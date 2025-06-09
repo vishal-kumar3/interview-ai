@@ -9,11 +9,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Plus, Minus, Save, RotateCcw, Trash2 } from "lucide-react"
+import { Plus, Save, RotateCcw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { JobDescriptionParseJsonSchema, type JobDescriptionParseJson } from "@/schema/jobDescription.schema"
 import { updateJobDescription } from "@/actions/jobDescription.action"

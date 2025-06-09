@@ -3,10 +3,11 @@
 import { auth } from "@/auth";
 import prisma from "@/config/prisma.config";
 import { deleteFileFromS3, previewFile } from "@/config/s3.config";
-import { extractTextFromPDF, parseResumeWithAi } from "@/utils/resumeParser";
-import { saveFileToLocal, uploadFileToS3 } from "@/utils/uploadResume";
+import { extractTextFromPDF, parseResumeWithAi } from "@/utils/PDFParser";
+import { saveFileToLocal, fileToS3 } from "@/utils/upload";
 import { resumeParseJsonSchema } from "@/schema/resume.schema";
 import { revalidatePath } from "next/cache";
+import { EntityType } from "@/types/user.types";
 
 export const getResumes = async (userId?: string) => {
   if (!userId) {
@@ -129,12 +130,16 @@ export async function uploadResume(formData: FormData) {
 	const text = await extractTextFromPDF(filePath);
 	console.log("Extracted text from resume:", text);
 	const resumeParseData = await parseResumeWithAi(text);
-	const { fileUrl, key } = await uploadFileToS3(filePath, name ?? file.name);
-	// console.log("Parsed resume data:", resumeParseData)
-	const resume = await prisma.resume.create({
+  const { error, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
+
+  if (error || !data) {
+    throw new Error("Failed to upload resume file to S3.");
+  }
+
+  const resume = await prisma.resume.create({
 		data: {
-			fileName: key,
-			fileUrl: fileUrl,
+      fileName: data.key,
+      fileUrl: data.fileUrl,
 			parsedData: resumeParseData,
 			user: {
 				connect: {
