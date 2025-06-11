@@ -36,8 +36,8 @@ export function JobDescriptionsList(
   const handleDelete = async (jobDescriptionId: string) => {
     try {
       const result = await deleteJobDescription(jobDescriptionId)
-      if (result.success) {
-        toast.success(result.message)
+      if (result.data) {
+        toast.success(result.data)
       } else {
         toast.error(result.error || "Failed to delete job description")
       }

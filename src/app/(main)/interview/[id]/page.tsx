@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react"
 import { InterviewHeader } from "@/components/interview/InterviewHeader"
 import type { ExtendedInterview } from "@/types/interview.types"
 import { auth } from "@/auth"
-import { createInterviewChat, getExtendedInterviewById, pushInterviewQuestion } from "@/actions/interview.action"
+import { createInterviewChat, getExtendedInterviewById } from "@/actions/interview.action"
 import Link from "next/link"
 import MainInterviewContent from "@/components/interview/MainInterviewContent"
 import { createCacheKey, redisCache, RedisCachePrefix } from "@/config/redis.config"
@@ -56,7 +56,6 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <MainInterviewContent
           interview={interview}
-          // submitResponse={submitResponse}
         />
       </div>
     </div>

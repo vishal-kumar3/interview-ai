@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SchemaUnion, Type } from '@google/genai'
 
-// Enums for consistent categorization
+// Enums
 const SkillCategoryEnum = z.enum([
   'TECHNICAL_HARD',
   'TECHNICAL_SOFT',
@@ -14,11 +14,11 @@ const SkillCategoryEnum = z.enum([
 ]);
 
 const ProficiencyLevelEnum = z.enum([
-  'BEGINNER',      // 0-1 years
-  'INTERMEDIATE',  // 1-3 years
-  'ADVANCED',      // 3-5 years
-  'EXPERT',        // 5+ years
-  'MASTER'         // 8+ years with proven track record
+  'BEGINNER',
+  'INTERMEDIATE',
+  'ADVANCED',
+  'EXPERT',
+  'MASTER'
 ]);
 
 const RequirementTypeEnum = z.enum([
@@ -39,107 +39,110 @@ const AssessmentMethodEnum = z.enum([
   'CERTIFICATION_VERIFICATION'
 ]);
 
-// Core skill requirement schema
+// Skill Requirement
 const SkillRequirementSchema = z.object({
-  name: z.string().min(1),
+  name: z.string(),
   category: SkillCategoryEnum,
   requiredLevel: ProficiencyLevelEnum,
-  minimumYearsExperience: z.number().min(0),
+  minimumYearsExperience: z.number(),
   requirementType: RequirementTypeEnum,
-  keywords: z.array(z.string()).min(1), // Alternative names/terms
-  context: z.string().optional(), // How it's used in the role
-  assessmentMethods: z.array(AssessmentMethodEnum).min(1),
-  weight: z.number().min(1).max(10), // Importance scoring
-
-  // Validation criteria
+  keywords: z.array(z.string()),
+  context: z.string().optional(),
+  assessmentMethods: z.array(AssessmentMethodEnum),
+  weight: z.number(),
   validationCriteria: z.object({
-    portfolioRequired: z.boolean().default(false),
-    certificationRequired: z.boolean().default(false),
+    portfolioRequired: z.boolean().optional(),
+    certificationRequired: z.boolean().optional(),
     specificToolsVersions: z.array(z.string()).optional(),
-    industryExperienceRequired: z.boolean().default(false),
-    teamSizeManaged: z.number().optional(), // For leadership roles
+    industryExperienceRequired: z.boolean().optional(),
+    teamSizeManaged: z.number().optional(),
     projectComplexityLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'ENTERPRISE']).optional()
-  })
+  }).optional()
 });
 
-// Experience requirement schema
+// Experience Requirement
 const ExperienceRequirementSchema = z.object({
   totalYears: z.object({
-    minimum: z.number().min(0),
-    preferred: z.number().min(0).optional(),
+    minimum: z.number(),
+    preferred: z.number().optional(),
     maximum: z.number().optional()
   }),
-
   industryExperience: z.object({
     required: z.boolean(),
     industries: z.array(z.string()),
-    minimumYears: z.number().min(0).optional()
+    minimumYears: z.number().optional()
   }),
-
   roleSpecificExperience: z.object({
     similarRoles: z.array(z.string()),
-    minimumYears: z.number().min(0),
+    minimumYears: z.number(),
     responsibilities: z.array(z.string())
   }),
-
   leadershipExperience: z.object({
     required: z.boolean(),
     teamSize: z.object({
       minimum: z.number().optional(),
       maximum: z.number().optional()
     }).optional(),
-    managementLevel: z.enum(['INDIVIDUAL_CONTRIBUTOR', 'TEAM_LEAD', 'MANAGER', 'SENIOR_MANAGER', 'DIRECTOR', 'VP']).optional()
+    managementLevel: z.enum([
+      'INDIVIDUAL_CONTRIBUTOR',
+      'TEAM_LEAD',
+      'MANAGER',
+      'SENIOR_MANAGER',
+      'DIRECTOR',
+      'VP'
+    ]).optional()
   })
 });
 
-// Education requirement schema
+// Education Requirement
 const EducationRequirementSchema = z.object({
   degree: z.object({
     required: z.boolean(),
     level: z.enum(['HIGH_SCHOOL', 'ASSOCIATE', 'BACHELOR', 'MASTER', 'PHD']).optional(),
     fields: z.array(z.string()).optional(),
-    equivalentExperience: z.boolean().default(false) // Can experience substitute?
+    equivalentExperience: z.boolean().optional()
   }),
-
   certifications: z.array(z.object({
     name: z.string(),
     required: z.boolean(),
     alternatives: z.array(z.string()).optional(),
-    validityPeriod: z.number().optional(), // Years before renewal
-    weight: z.number().min(1).max(10)
+    validityPeriod: z.number().optional(),
+    weight: z.number()
   })),
-
   continuousLearning: z.object({
     required: z.boolean(),
     examples: z.array(z.string()).optional()
   })
 });
 
+// Responsibilities
+const ResponsibilitySchema = z.object({
+  description: z.string(),
+  priority: z.enum(['PRIMARY', 'SECONDARY', 'OCCASIONAL']),
+  skillsRequired: z.array(z.string()),
+  complexityLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+  percentageOfTime: z.number().optional()
+});
 
+// Job Info
+const JobInfoSchema = z.object({
+  title: z.string(),
+  department: z.string().optional(),
+  reportingStructure: z.string().optional(),
+  jobLevel: z.enum(['ENTRY', 'MID', 'SENIOR', 'PRINCIPAL', 'EXECUTIVE']),
+  employmentType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY'])
+});
+
+// Main Schema
 export const JobDescriptionParseJsonSchema = z.object({
-  // Basic job information
-  jobInfo: z.object({
-    title: z.string().min(1),
-    department: z.string().optional(),
-    reportingStructure: z.string().optional(),
-    jobLevel: z.enum(['ENTRY', 'MID', 'SENIOR', 'PRINCIPAL', 'EXECUTIVE']),
-    employmentType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY'])
-  }),
-
-  // Core requirements
-  skillRequirements: z.array(SkillRequirementSchema).min(1),
+  jobInfo: JobInfoSchema,
+  skillRequirements: z.array(SkillRequirementSchema),
   experienceRequirements: ExperienceRequirementSchema,
   educationRequirements: EducationRequirementSchema,
-
-  // Role specifics
-  responsibilities: z.array(z.object({
-    description: z.string(),
-    priority: z.enum(['PRIMARY', 'SECONDARY', 'OCCASIONAL']),
-    skillsRequired: z.array(z.string()),
-    complexityLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']),
-    percentageOfTime: z.number().min(0).max(100).optional()
-  })).min(1),
+  responsibilities: z.array(ResponsibilitySchema)
 });
+
+export type JobDescriptionParseJson = z.infer<typeof JobDescriptionParseJsonSchema>;
 
 export const jobDescriptionResponseSchema: SchemaUnion = {
   "type": Type.OBJECT,
@@ -352,5 +355,3 @@ export const jobDescriptionResponseSchema: SchemaUnion = {
   },
   "required": ["jobInfo", "skillRequirements", "experienceRequirements", "educationRequirements", "responsibilities"]
 }
-
-export type JobDescriptionParseJson = z.infer<typeof JobDescriptionParseJsonSchema>;

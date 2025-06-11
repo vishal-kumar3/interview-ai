@@ -2,14 +2,11 @@
 import { InterviewClient } from "@/components/interview/InterviewClient"
 import { QuestionCard } from "@/components/interview/QuestionCard"
 import { ExtendedInterview, StandardQuestion } from "@/types/interview.types"
-import { Chat } from "@google/genai"
 import { useEffect, useState } from "react"
-import { aiQuestionSchema, GeminiQuestionUnionSchema } from "@/schema/question.schema"
-import { pushInterviewQuestion, createInterviewChat } from "@/actions/interview.action"
-import { InterviewStatus, SessionMetadata } from "@prisma/client"
+import { InterviewStatus } from "@prisma/client"
 import { useRouter } from "next/navigation"
-import { createGenAIChat, GeminiHistoryType } from "@/config/gemini.config"
 import { generateInitialQuestion, nextQuestion } from "@/actions/chat.action"
+import { Button } from "@/components/ui/button"
 
 
 interface MainInterviewContentProps {
@@ -74,19 +71,20 @@ const MainInterviewContent = ({
     }
 
     initializeQuestion()
-  }, [])
+  }, [interview.id])
 
   if (error) {
     return (
       <div className="space-y-4 sm:space-y-6 lg:space-y-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>
-          <button
+          <Button
+            variant="destructive"
             onClick={() => window.location.reload()}
             className="mt-2 text-red-600 underline"
           >
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     )

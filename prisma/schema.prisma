@@ -79,7 +79,7 @@ model PasswordResetToken {
 model Resume {
   id                String             @id @default(uuid())
   userId            String
-  user              User               @relation(fields: [userId], references: [id])
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   fileName          String
   fileUrl           String?
   parsedData        Json
@@ -91,7 +91,7 @@ model Resume {
 model JobDescription {
   id                String             @id @default(uuid())
   userId            String
-  user              User               @relation(fields: [userId], references: [id])
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   title             String
   company           String?
   parsedData        Json
@@ -122,7 +122,7 @@ model InterviewSession {
   id                String             @id @default(uuid())
   title             String
   userId            String
-  user              User               @relation(fields: [userId], references: [id])
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   resumeId          String?
   resume            Resume?            @relation(fields: [resumeId], references: [id])
   jobDescriptionId  String?
@@ -142,7 +142,7 @@ model InterviewSession {
 model SessionMetadata {
   id               String           @id @default(uuid())
   sessionId        String           @unique
-  session          InterviewSession @relation(fields: [sessionId], references: [id])
+  session          InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   aiInstructions   String
   aiPromptContext  Json[] // Store the AI context for consistency
   focusAreas       String[] // Areas to focus on during interview
@@ -168,11 +168,11 @@ model SessionMetadata {
 model Question {
   id                 String           @id @default(uuid())
   sessionId          String
-  session            InterviewSession @relation(fields: [sessionId], references: [id])
+  session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   text               String
   type               InterviewType
   parentId           String? // For follow-up questions
-  parent             Question?        @relation("QuestionFollowUp", fields: [parentId], references: [id])
+  parent             Question?        @relation("QuestionFollowUp", fields: [parentId], references: [id], onDelete: Cascade)
   followUps          Question[]       @relation("QuestionFollowUp")
   isFollowUp         Boolean          @default(false)
   followUpDepth      Int              @default(0) // Track how deep the follow-up chain is
@@ -188,9 +188,9 @@ model Question {
 model Response {
   id           String           @id @default(uuid())
   questionId   String           @unique
-  question     Question         @relation(fields: [questionId], references: [id])
+  question     Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
   sessionId    String
-  session      InterviewSession @relation(fields: [sessionId], references: [id])
+  session      InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   responseType String // "text", "audio", "video"
   content      String?
   fileUrl      String?
@@ -204,7 +204,7 @@ model Response {
 model Feedback {
   id         String   @id @default(uuid())
   responseId String   @unique
-  response   Response @relation(fields: [responseId], references: [id])
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
   content    String
   score      Int?
   createdAt  DateTime @default(now())
@@ -220,7 +220,7 @@ enum HireRecommendation {
 model InterviewFeedback {
   id                 String             @id @default(uuid())
   sessionId          String             @unique
-  session            InterviewSession   @relation(fields: [sessionId], references: [id])
+  session            InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   overallScore       Int?
   feedback           String
   hireRecommendation HireRecommendation

@@ -1,11 +1,15 @@
 "use server"
+import { getInterviewChatSession } from "@/actions/chat.action";
 import { auth } from "@/auth";
 import { createGenAIChat, GeminiHistoryType } from "@/config/gemini.config";
 import prisma from "@/config/prisma.config";
+import { createCacheKey, redisCache, RedisCachePrefix } from "@/config/redis.config";
+import { interviewGuidePrompt } from "@/lib/prompt";
+import { overallInterviewFeedbackGeminiSchema, overallInterviewFeedbackSchema, overallInterviewFeedbackSystemInstructions } from "@/schema/feedback.schema";
 import { InterviewFormData } from "@/schema/interview.schema";
 import { AIQuestionSchema, GeminiQuestionUnionSchema } from "@/schema/question.schema";
 import { ExtendedInterview, StandardQuestion } from "@/types/interview.types";
-import { Difficulty, InterviewType, SessionMetadata } from "@prisma/client";
+import { Difficulty, InterviewStatus, InterviewType, SessionMetadata } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export const createInterviewSession = async (data: InterviewFormData) => {
@@ -45,50 +49,7 @@ export const createInterviewSession = async (data: InterviewFormData) => {
     }
   }
 
-  const prompt = `You are a professional ${jobDescription.title} interviewer with extensive experience in technical recruitment and candidate assessment.
-
-**Your Role:**
-- Conduct a comprehensive interview session tailored to the candidate's background and the job requirements
-- Evaluate technical competency, problem-solving skills, and cultural fit
-- Provide constructive feedback and follow-up questions
-
-**Job Description:**
-${jobDescription.parsedData}
-
-**Candidate Resume:**
-${resume.parsedData}
-
-**Interview Configuration:**
-- Type: ${data.interviewType}
-- Difficulty: ${data.difficulty}
-${data.notes ? `- Focus Areas: ${data.notes}` : ""}
-
-**Instructions:**
-1. Start with a brief introduction and overview of the interview process
-1.5. Try simulating a real interview environment, where you ask questions and the candidate responds as if they were in a real interview
-2. Ask relevant questions that match both the job requirements and candidate's experience
-3. Adapt question difficulty based on candidate responses - increase complexity for strong answers, provide guidance for weaker ones
-4. Include a mix of technical, behavioral, and situational questions appropriate to the interview type
-5. Ask follow-up questions to dive deeper into specific topics
-6. Maintain a professional yet conversational tone
-7. Provide hints or clarifications if the candidate seems confused
-8. Conclude each question with constructive feedback before moving to the next
-9. Don't fall for over the top explaination, ask for thorough reasoning and implementation and challenges
-10. Be aggressive but in modest way
-
-**Question Guidelines:**
-- Technical questions should be practical and job-relevant
-- Behavioral questions should assess soft skills and cultural fit
-- System design questions should be appropriate to the seniority level
-- Always explain the reasoning behind your follow-up questions
-
-**Warning:**
-- Do not ask questions that are too generic or unrelated to the job description
-- Do not halucinate or provide irrelevant information
-- Stick to the job description and resume provided, avoid questions that is irrelevant to the job or candidate's experience
-
-Begin the interview session now.`
-
+  const prompt = interviewGuidePrompt(data, jobDescription, resume)
   const interview = await prisma.interviewSession.create({
     data: {
       jobDescriptionId: jobDescription.id,
@@ -223,11 +184,15 @@ export const pushInterviewQuestion = async (interviewId: string, question: AIQue
 }
 
 export const deleteInterviewSession = async (interviewId: string) => {
+  console.log("Deleting interview session with ID:", interviewId)
+  console.log("Interview", await prisma.interviewSession.findUnique({ where: { id: interviewId } }))
+
   const deletedSession = await prisma.interviewSession.delete({
     where: {
       id: interviewId,
     },
   }).catch(err => null)
+
   console.log("Deleted session:", deletedSession)
   if (!deletedSession) {
     return {
@@ -246,7 +211,8 @@ export const endInterviewSession = async (interviewId: string) => {
 
   const interview = await prisma.interviewSession.findUnique({
     where: {
-      id: interviewId
+      id: interviewId,
+      status: { not: InterviewStatus.COMPLETED }
     },
     include: {
       interviewFeedback: true,
@@ -256,13 +222,70 @@ export const endInterviewSession = async (interviewId: string) => {
   if (!interview) {
     return {
       error: "Session Not Found",
-      message: "The specified interview session does not exist.",
+      data: null
     }
   }
 
-  if (!interview.interviewFeedback) {
-    
+  const updatedSession: any = {
+    status: "COMPLETED",
   }
 
+  if (!interview.interviewFeedback) {
+    const chat = await getInterviewChatSession(interviewId)
 
+    const overallFeedback = await chat.sendMessage({
+      message: "Please provide overall feedback for the interview session.",
+      config: {
+        systemInstruction: overallInterviewFeedbackSystemInstructions,
+        responseMimeType: "application/json",
+        responseSchema: overallInterviewFeedbackGeminiSchema
+      }
+    })
+
+    const aiContext = chat.getHistory()
+
+    // TODO: do this one in background job
+    await prisma.sessionMetadata.update({
+      where: { sessionId: interviewId },
+      data: {
+        aiPromptContext: aiContext
+          .filter(content => content != null)
+          .map(content => JSON.parse(JSON.stringify(content)))
+      }
+    }).catch(err => {
+      console.error("Error updating session metadata:", err);
+      return null;
+    })
+
+    redisCache.set(
+      createCacheKey(RedisCachePrefix.INTERVIEW, interviewId),
+      chat
+    )
+
+    const { data: overallFeedbackData, error: overallFeedbackError } = overallInterviewFeedbackSchema.safeParse(JSON.parse(overallFeedback.text ?? "{}"))
+
+    if (overallFeedbackData) {
+      updatedSession.interviewFeedback = {
+        create: {
+          ...overallFeedbackData
+        }
+      }
+    }
+
+  }
+
+  const updatedInterview = await prisma.interviewSession.update({
+    where: { id: interviewId },
+    data: {
+      ...updatedSession
+    }
+  }).catch(err => {
+    console.error("Error updating interview session status:", err);
+    return null;
+  });
+
+  return {
+    error: null,
+    data: updatedInterview,
+  }
 }

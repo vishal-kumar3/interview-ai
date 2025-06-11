@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useSecurity } from "@/hooks/use-security"
-import { useInterview } from "@/hooks/useInterview"
 import { ResponseForm } from "./ResponseForm"
 import { LoadingIndicator } from "./LoadingIndicator"
 import { EndInterviewDialog } from "./EndInterviewDialog"
@@ -53,7 +52,7 @@ export function InterviewClient({
   const submitResponse = async (textResponse: string, audioResponse?: { audio: AudioRecording, filePath: string }) => {
     setIsSubmitting(true)
     setIsGeneratingNext(true)
-    const { error, question, feedback } = await submitInterviewResponse(
+    const { error, question, closing } = await submitInterviewResponse(
       sessionId,
       currentQuestion.id,
       audioResponse ? "audio" : "text",
@@ -73,7 +72,7 @@ export function InterviewClient({
     }
     else {
       setQuestion(null)
-      setClosingStatement(feedback)
+      setClosingStatement(closing)
     }
 
     setIsSubmitting(false)
@@ -84,6 +83,8 @@ export function InterviewClient({
     <>
       {!isGeneratingNext && (
         <ResponseForm
+          interviewId={currentSession.id}
+          questionId={currentQuestion.id}
           isSubmitting={isSubmitting}
           onSubmitResponse={submitResponse}
           onEndInterview={handleEndInterview}

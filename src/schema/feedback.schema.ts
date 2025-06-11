@@ -2,7 +2,6 @@ import { z } from "zod";
 import { SchemaUnion, Type } from "@google/genai";
 
 export const feedbackSystemInstructions = `
-You are an AI specialized in providing feedback on interview responses.
 Given an interview response, provide constructive feedback, suggest areas for improvement,
 and assign a score (if applicable). Focus on clarity, conciseness, relevance, and overall quality
 of the response.
@@ -109,4 +108,3 @@ export const overallInterviewFeedbackGeminiSchema: SchemaUnion = {
 
 // Type definitions
 export type OverallInterviewFeedbackData = z.infer<typeof overallInterviewFeedbackSchema>;
-

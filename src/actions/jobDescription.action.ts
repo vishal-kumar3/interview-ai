@@ -3,8 +3,8 @@
 import { auth } from "@/auth"
 import { createGenAIText } from "@/config/gemini.config"
 import prisma from "@/config/prisma.config"
-import { jobDescriptionParserPrompt } from "@/lib/prompt"
-import { jobDescriptionResponseSchema } from "@/schema/jobDescription.schema"
+import { jobDescriptionGeneratePrompt, jobDescriptionParserPrompt } from "@/lib/prompt"
+import { JobDescriptionParseJsonSchema, jobDescriptionResponseSchema } from "@/schema/jobDescription.schema"
 import { extractTextFromPDF } from "@/utils/PDFParser"
 import { saveFileToLocal } from "@/utils/upload"
 import { revalidatePath } from "next/cache"
@@ -105,20 +105,28 @@ export const deleteJobDescription = async (jobDescriptionId: string) => {
       data: null,
     }
   }
-  await prisma.jobDescription.delete({
+  const deleted = await prisma.jobDescription.delete({
     where: {
       id: jobDescriptionId,
       userId: session.user.id,
     },
-  })
+  }).catch(err => null)
+
+  if (!deleted) {
+    return {
+      error: "Failed to delete job description",
+      data: null,
+    }
+  }
+
   revalidatePath("/job-descriptions")
   return {
-    success: true,
-    message: "Job Description deleted successfully!",
+    error: null,
+    data: "Job Description deleted successfully!",
   }
 }
 
-export async function uploadJobDescription(formData: FormData) {
+export async function   uploadJobDescription(formData: FormData) {
   const session = await auth()
 
   if (!session?.user) {
@@ -143,25 +151,37 @@ export async function uploadJobDescription(formData: FormData) {
   if (company) job_description += `Company Name: ${company}\n`
   job_description += `Job Description: ${description}`
 
-  const jobDescriptionParsedData = await parseJobDescriptionWithAi(description)
+  const { data, error} = await parseJobDescriptionWithAi(description)
+
+  if (error || !data) {
+    return {
+      error,
+      data: null,
+    }
+  }
 
   const jobDescription = await prisma.jobDescription.create({
     data: {
       title: title,
       company: company,
-      parsedData: jobDescriptionParsedData,
+      parsedData: data,
       user: {
         connect: {
           id: session.user.id,
         },
       }
     },
-  })
+  }).catch(err => null)
 
-  console.log(jobDescription)
+  if (!jobDescription) {
+    return {
+      error: "Failed to create job description",
+      data: null,
+    }
+  }
 
   revalidatePath("/job-descriptions")
-  return { success: true, message: "Job Description uploaded successfully!" }
+  return { error: null, data: "Job Description uploaded successfully!" };
 }
 
 export const generateJobDescription = async (description: string, title?: string, company_name?: string) => {
@@ -181,15 +201,7 @@ export const generateJobDescription = async (description: string, title?: string
 
   const generatedDescription = await createGenAIText(
     prompt,
-    `Generate a comprehensive and detailed job description based on the provided information.
-
-Include the following sections:
-- Job Overview/Summary
-- Key Responsibilities (5-8 bullet points)
-- Required Qualifications (education, experience, skills)
-- Preferred Qualifications
-
-Make it professional and engaging. The response should be plain text, not JSON. Use bullet points for readability.`,
+    jobDescriptionGeneratePrompt,
   )
 
   if (!generatedDescription?.parts || generatedDescription.parts.length === 0) {
@@ -198,17 +210,18 @@ Make it professional and engaging. The response should be plain text, not JSON. 
       data: null,
     }
   }
-  console.log("Generated:", generatedDescription)
-  console.log("Generated parts:", generatedDescription.parts)
-  console.log("Generated Description:", generatedDescription.parts[0].text)
+
   const parsedResponse = generatedDescription.parts[0].text as string
+
+
+
   return {
     success: true,
     data: parsedResponse,
   };
 }
 
-export const parseJobDescriptionWithAi = async (text: string): Promise<any> => {
+export const parseJobDescriptionWithAi = async (text: string) => {
 
   try {
     const response = await createGenAIText(
@@ -217,12 +230,25 @@ export const parseJobDescriptionWithAi = async (text: string): Promise<any> => {
       jobDescriptionResponseSchema
     )
 
-    if (!response?.parts) throw new Error("No response parts found from AI");
+    if (!response?.parts) return {
+      error: "Failed to parse job description",
+      data: null,
+    }
 
-    const parsedResponse = JSON.parse(response.parts[0].text as string)
-    return parsedResponse;
+    const { data, error } = JobDescriptionParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string))
+
+    if (error || !data) {
+      return {
+        error: "Invalid response format from AI",
+        data: null,
+      }
+    }
+
+    return { data, error: null };
   } catch (error) {
-    console.error("Error parsing job description with AI:", error);
-    throw new Error("Failed to parse job description with AI.");
+    return {
+      error: "An error occurred while parsing the job description",
+      data: null,
+    }
   }
 }

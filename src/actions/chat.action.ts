@@ -4,6 +4,7 @@ import { pushInterviewQuestion } from "@/actions/interview.action";
 import { createGenAIChat, transcriptFromAudio } from "@/config/gemini.config";
 import prisma from "@/config/prisma.config";
 import { createCacheKey, redisCache, RedisCachePrefix } from "@/config/redis.config";
+import { initialQuestionPrompt, nextQuestionPrompt } from "@/lib/prompt";
 import { feedbackGeminiResponseSchema, feedbackResponseSchema, feedbackSystemInstructions, overallInterviewFeedbackGeminiSchema, overallInterviewFeedbackSchema, overallInterviewFeedbackSystemInstructions } from "@/schema/feedback.schema";
 import { aiQuestionSchema, GeminiQuestionUnionSchema } from "@/schema/question.schema";
 import { EntityType } from "@/types/user.types";
@@ -31,14 +32,19 @@ export const generateInitialQuestion = async (interviewId: string) => {
   const chat = await createChatFromConfig(getCacheChat as RedisChat);
 
   const initialQuestion = await chat.sendMessage({
-    message: "Please start the interview by generating initial questions."
+    message: "Please start the interview with first questions.",
+    config: {
+      systemInstruction: initialQuestionPrompt,
+      responseMimeType: "application/json",
+      responseSchema: GeminiQuestionUnionSchema
+    }
   })
 
   const { data, error, success } = aiQuestionSchema.safeParse(JSON.parse(initialQuestion.text ?? "{}"))
   if (!data || error || !success) {
     return { data: null, error: "Error while generating question, please try again." }
   }
-  console.log("Generated initial question:", data)
+
   const question = await pushInterviewQuestion(interviewId, data)
 
   redisCache.set(
@@ -66,6 +72,17 @@ export const submitInterviewResponse = async (
   let responseMetadata = null;
 
   if (audioResponse) {
+    const { error: transcriptError, data: transcriptData } = await transcriptFromAudio(audioResponse.filePath, audioResponse.fileType);
+    // TODO: if this fails, retry logic.
+
+    if (transcriptError || !transcriptData) {
+      return {
+        error: transcriptError || "Failed to upload audio or generate transcript",
+        question: null,
+        closing: null
+      }
+    }
+
     // File storage logic and transcript generation
     // TODO: S3 upload logic:- maybe background job for this
     const { error: s3Error, data: s3Data } = await fileToS3(
@@ -76,19 +93,16 @@ export const submitInterviewResponse = async (
 
     fileUrl = s3Data?.fileUrl || null;
 
-    const { error: transcriptError, data: transcriptData } = await transcriptFromAudio(audioResponse.filePath, audioResponse.fileType);
-    // TODO: if this fails, retry logic.
-
-    if (transcriptError || !transcriptData) {
-      return {
-        error: transcriptError || "Failed to upload audio or generate transcript",
-        question: null,
-        feedback: null
-      }
-    }
-
     responseMetadata = transcriptData
     textResponse = transcriptData.transcript || textResponse;
+  }
+
+  if (textResponse?.length === 0) {
+    return {
+      error: "Unable to capture the response, please try again.",
+      question: null,
+      closing: null
+    }
   }
 
   //TODO: Ensure if the audio response is uploaded to s3 and transcripted before saving
@@ -107,14 +121,13 @@ export const submitInterviewResponse = async (
     return {
       error: "Failed to save response",
       question: null,
-      feedback: null
+      closing: null
     }
   }
 
   const feedbackPrompt = `
   ${feedbackSystemInstructions}
-  Below is the audio response metadata:
-  ${JSON.stringify(responseMetadata, null, 2)}
+  ${ responseMetadata ? `Here is the audio response metadata:\n${JSON.stringify(responseMetadata, null, 2)}` : ""}
   `
 
   // Feedback generation using Gemini AI
@@ -143,7 +156,7 @@ export const submitInterviewResponse = async (
     return {
       error: "Failed to generate feedback",
       question: null,
-      feedback: null
+      closing: null
     }
   }
 
@@ -151,7 +164,7 @@ export const submitInterviewResponse = async (
   const nextQuestion = await chat.sendMessage({
     message: "Based on the response, please go ahead with either a follow-up if required or the next question for the interview. Or if you think the interview is complete, please end the interview.",
     config: {
-      systemInstruction: "You are an AI interviewer. Based on the response, generate a follow-up question or the next question for the interview. If the interview is complete, end the interview.",
+      systemInstruction: nextQuestionPrompt,
       responseMimeType: "application/json",
       responseSchema: GeminiQuestionUnionSchema
     }
@@ -163,7 +176,7 @@ export const submitInterviewResponse = async (
     return {
       error: "Error while generating next question, please try again.",
       question: null,
-      feedback: null
+      closing: null
     }
   }
 
@@ -246,7 +259,7 @@ export const submitInterviewResponse = async (
     return {
       error: null,
       question: null,
-      feedback: closingMessage.text || "Thanks for your responses. The interview is now complete."
+      closing: closingMessage.text || "Thanks for your responses. The interview is now complete."
     }
   }
 
@@ -255,13 +268,39 @@ export const submitInterviewResponse = async (
   return {
     error: null,
     question: question,
-    feedback: null
+    closing: null
   }
 }
 
-export const nextQuestion = async (interviewId: string) => {
+export const getInterviewChatSession = async (interviewId: string) => {
   const getCacheChat = await redisCache.get(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
-  const chat = await createChatFromConfig(getCacheChat as RedisChat);
+
+  if (!getCacheChat) {
+    const interviewSession = await prisma.interviewSession.findUnique({
+      where: { id: interviewId },
+      include: {
+        sessionMetadata: true,
+      }
+    });
+
+    if (!interviewSession) {
+      throw new Error("Interview session not found");
+    }
+
+    const chat = await createGenAIChat(
+      interviewSession.sessionMetadata?.aiPromptContext as Content[],
+      interviewSession.sessionMetadata?.aiInstructions,
+      GeminiQuestionUnionSchema
+    );
+
+    return chat;
+  }
+
+  return await createChatFromConfig(getCacheChat as RedisChat);
+}
+
+export const nextQuestion = async (interviewId: string) => {
+  const chat = await getInterviewChatSession(interviewId)
 
   const nextQuestion = await chat.sendMessage({
     message: "please go ahead with either a follow-up if required or the next question for the interview."

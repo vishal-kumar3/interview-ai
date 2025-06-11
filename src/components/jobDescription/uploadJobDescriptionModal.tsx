@@ -76,8 +76,8 @@ export function UploadJobDescriptionModal({ variant = "default" }: UploadJobDesc
       }
 
       const result = await uploadJobDescription(formData)
-      if (result.success) {
-        toast.success(result.message)
+      if (result.data) {
+        toast.success(result.data)
         setOpen(false)
         form.reset()
       }

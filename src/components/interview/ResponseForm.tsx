@@ -22,9 +22,11 @@ interface ResponseFormProps {
     }
   ) => void
   onEndInterview: () => void
+  interviewId: string
+  questionId: string
 }
 
-export function ResponseForm({ isSubmitting, onSubmitResponse, onEndInterview }: ResponseFormProps) {
+export function ResponseForm({ isSubmitting, onSubmitResponse, onEndInterview, interviewId, questionId }: ResponseFormProps) {
   const [responseType, setResponseType] = useState<"text" | "audio">("text")
   const [audioRecording, setAudioRecording] = useState<AudioRecording | null>(null)
 
@@ -39,8 +41,8 @@ export function ResponseForm({ isSubmitting, onSubmitResponse, onEndInterview }:
   }
 
   const handleAudioSubmit = async () => {
-    console.log("Submitting audio response:", audioRecording, audioRecording?.blob)
-    const filePath = await saveBlobToLocal(audioRecording?.blob, "")
+    const fileName = `${Date.now()}`
+    const filePath = await saveBlobToLocal(audioRecording?.blob, fileName)
     if (!audioRecording || !filePath) {
       return console.error("No audio recording or file path available")
     }
