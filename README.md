@@ -189,34 +189,6 @@ npm run lint            # Run ESLint
 - Protected API routes with authentication
 - SQL injection prevention with Prisma
 
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. **Connect Repository**
-   - Import project to Vercel
-   - Configure environment variables
-
-2. **Database Setup**
-   - Use Vercel Postgres or external PostgreSQL
-   - Run migrations: `npm run prisma:migrate:deploy`
-
-3. **Environment Configuration**
-   - Set all required environment variables
-   - Configure custom domains if needed
-
-### Manual Deployment
-
-1. **Build Application**
-```bash
-npm run build
-```
-
-2. **Deploy to Platform**
-   - Upload build files
-   - Configure environment variables
-   - Set up database and Redis
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -225,23 +197,9 @@ npm run build
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an [issue](https://github.com/your-repo/issues)
-- Check the [documentation](https://your-docs-link.com)
-- Join our [community](https://your-community-link.com)
-
 ## 🔄 Version History
 
 - **v1.0.0** - Initial release with core interview features
 - **v1.1.0** - Added audio analysis and advanced feedback
 - **v1.2.0** - Enhanced UI/UX and performance improvements
 
----
-
-Built with ❤️ using Next.js and AI technologies
