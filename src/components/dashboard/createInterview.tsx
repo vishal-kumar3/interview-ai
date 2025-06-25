@@ -55,7 +55,6 @@ export function CreateInterviewModal({
 
   const onSubmit = async (data: InterviewFormData) => {
     setIsLoading(true)
-    console.log(data)
     try {
       const result = await createInterviewSession(data)
 
@@ -65,7 +64,6 @@ export function CreateInterviewModal({
         setOpen(false)
       }
     } catch (error) {
-      console.log(error)
       toast.error("Failed to create interview session")
     } finally {
       setIsLoading(false)

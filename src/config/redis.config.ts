@@ -16,6 +16,8 @@ export const createCacheKey = (prefix: RedisCachePrefix, id: string) => {
 }
 
 export const redisCache = {
+  client: redis, // Add direct access to Redis client
+
   get: async (key: string) => {
     try {
       const value = await redis.get(key)
@@ -28,7 +30,6 @@ export const redisCache = {
 
   set: async (key: string, value: any, ttl: number = 60*60*12) => {
     try {
-      console.log("chat: ", JSON.stringify(value))
       await redis.set(key, JSON.stringify(value), 'EX', ttl)
     } catch (error) {
       console.error('Error setting to Redis:', error)

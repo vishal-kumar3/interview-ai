@@ -22,10 +22,8 @@ export const createAiCompletion = async (
 
     if (outputSchema && outputName) query.response_format = zodResponseFormat(outputSchema, outputName);
 
-    console.log("Creating AI completion with query:", query);
 
     const response = await client.chat.completions.create(query);
-    console.log("AI response:", response);
     return response.choices[0].message.content;
   } catch (error) {
     console.error("Error creating AI completion:", error);

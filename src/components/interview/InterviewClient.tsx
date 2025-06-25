@@ -8,6 +8,8 @@ import { EndInterviewDialog } from "./EndInterviewDialog"
 import type { ExtendedInterview, StandardQuestion } from "@/types/interview.types"
 import { AudioRecording } from "@/hooks/use-audio-recorder"
 import { submitInterviewResponse } from "@/actions/chat.action"
+import { endInterviewSession } from "@/actions/interview.action"
+import Link from "next/link"
 
 interface InterviewClientProps {
   sessionId: string
@@ -32,11 +34,9 @@ export function InterviewClient({
   const { malpracticeCount } = useSecurity({
     sessionId: sessionId,
     onMalpractice: (type) => {
-      console.log(`Malpractice detected: ${type}`)
     },
     onTerminate: () => {
       // terminateSession()
-      console.log("Session terminated due to malpractice")
     },
   })
 
@@ -46,7 +46,13 @@ export function InterviewClient({
 
   const confirmEndInterview = async () => {
     setShowEndDialog(false)
-    // await endInterview()
+    const { data, error } = await endInterviewSession(sessionId)
+    if (!data || error) {
+      console.error("Error ending interview session:", error)
+      return
+    }
+    setClosingStatement("Thank you for participating in the interview.")
+
   }
 
   const submitResponse = async (textResponse: string, audioResponse?: { audio: AudioRecording, filePath: string }) => {
@@ -81,30 +87,40 @@ export function InterviewClient({
 
   return (
     <>
-      {!isGeneratingNext && (
-        <ResponseForm
-          interviewId={currentSession.id}
-          questionId={currentQuestion.id}
-          isSubmitting={isSubmitting}
-          onSubmitResponse={submitResponse}
-          onEndInterview={handleEndInterview}
-        />
-      )}
+      {
+        closingStatement ? (
+          <div className="text-center mt-10">
+            <h2 className="text-2xl font-semibold mb-4">Interview Completed</h2>
+            <p className="text-gray-600 mb-6">{closingStatement}</p>
+            <Link href={`/interview/${sessionId}/feedback`}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Go to Feedback Page
+            </Link>
+          </div>
+        ): (
+            <>
+              {!isGeneratingNext && (
+                <ResponseForm
+                  interviewId={currentSession.id}
+                  questionId={currentQuestion.id}
+                  isSubmitting={isSubmitting}
+                  onSubmitResponse={submitResponse}
+                  onEndInterview={handleEndInterview}
+                />
+              )}
 
-      {isGeneratingNext && <LoadingIndicator />}
+              {isGeneratingNext && <LoadingIndicator />}
 
-      {closingStatement && (
-        <div className="closing-statement">
-          <h2>Closing Statement</h2>
-          <p>{closingStatement}</p>
-        </div>
-      )}
+              <EndInterviewDialog
+                open={showEndDialog}
+                onOpenChange={setShowEndDialog}
+                onConfirm={confirmEndInterview}
+              />
+          </>
+        )
+      }
 
-      <EndInterviewDialog
-        open={showEndDialog}
-        onOpenChange={setShowEndDialog}
-        onConfirm={confirmEndInterview}
-      />
     </>
   )
 }

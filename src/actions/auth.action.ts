@@ -49,7 +49,6 @@ export const login = async (data: z.infer<typeof loginFormSchema>) => {
     return { success: "Logged In Successfully" };
   } catch (error) {
     if (error instanceof AuthError) {
-      console.log("Error Type:- ",error.type)
       switch (error.type) {
         case "CredentialsSignin":
           return { error: "Invalid Credentials!!" };
@@ -124,27 +123,4 @@ export const register = async (data: z.infer<typeof registerFormSchema>) => {
   return {
     success: "Confirmation Email Sent"
   }
-
-  // try {
-  //   await signIn("credentials", {
-  //     email,
-  //     password,
-  //     redirectTo: DEFAULT_LOGIN_REDIRECT,
-  //   });
-
-  //   return { success: "Logged In Successfully" };
-  // } catch (error) {
-  //   if (error instanceof AuthError) {
-  //     console.log("Error Type:- ", error.type)
-  //     switch (error.type) {
-  //       case "CredentialsSignin":
-  //         return { error: "Invalid Credentials!!" };
-
-  //       default:
-  //         return { error: "Something went wrong!!" };
-  //     }
-  //   }
-
-  //   throw error;
-  // }
 };

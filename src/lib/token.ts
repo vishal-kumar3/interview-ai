@@ -7,7 +7,7 @@ export const generateVerificationToken = async (email: string) => {
 
   const existingToken = await getVerificationTokenByEmail(email)
   if(existingToken) {
-    const deleteToken = await prisma.verificationToken.delete({
+    await prisma.verificationToken.delete({
       where: {
         id: existingToken.id
       }
@@ -43,7 +43,6 @@ export const generatePasswordResetToken = async (email: string) => {
     }).catch(error => null)
 
     if(!deleteToken){
-      console.log('token.ts: generatePasswordResetToken: Error deleting password reset token')
       return { error: 'Something went wrong!'}
     }
   }

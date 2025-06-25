@@ -17,77 +17,40 @@ interface PDFParserConstructor {
 const PDFParser = require("pdf2json") as PDFParserConstructor;
 
 
-export async function parseResumeWithAi(text: string): Promise<any> {
-  try {
-    const response = await createGenAIText(
-      `Resume Text: ${text}`,
-      resumeParserPrompt,
-      resumeReponseSchema
-    )
-
-    if (!response?.parts) throw new Error("No response parts found from AI");
-
-    const { data: parsedResponse , error} = resumeParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string));
-
-    return parsedResponse;
-  } catch (error) {
-    console.error("Error parsing resume with AI:", error);
-    throw new Error("Failed to parse resume with AI.");
-  }
-}
-
-
-export const extractTextFromPDF = async (filePath: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
+export async function extractTextFromPDF(filePath: string): Promise<{
+  error: string | null,
+  data: string | null
+}> {
+  return new Promise((resolve) => {
     try {
-      const pdfParser = new PDFParser();
+      const pdfParser = new (PDFParser as any)();
+      const extractedText: string[] = [];
+      const hyperlinks: string[] = [];
 
       pdfParser.on("pdfParser_dataError", (errData: any) => {
-        console.error("Error parsing PDF:", errData);
-        reject(new Error('Failed to extract text from PDF'));
+        console.error("PDF parsing error:", errData);
+        resolve({
+          error: 'Failed to parse PDF file',
+          data: null
+        });
       });
 
       pdfParser.on("pdfParser_dataReady", (pdfData: any) => {
         try {
-          let extractedText = '';
-          let hyperlinks: string[] = [];
-
-          // Debug: Log the structure to understand the data format
-          console.log("PDF Data structure:", JSON.stringify(pdfData, null, 2).substring(0, 500));
-
-          // Check different possible data structures
-          const pages = pdfData?.Pages || pdfData?.formImage?.Pages || pdfData?.data?.Pages;
-
-          if (!pages || !Array.isArray(pages)) {
-            console.warn("No pages found in PDF data, attempting text extraction from raw data");
-            // Fallback: try to extract any text from the entire data structure
-            const dataStr = JSON.stringify(pdfData);
-            const textMatches = dataStr.match(/"T":"([^"]+)"/g);
-            if (textMatches) {
-              textMatches.forEach(match => {
-                const text = match.match(/"T":"([^"]+)"/)?.[1];
-                if (text) {
-                  extractedText += decodeURIComponent(text) + ' ';
-                }
-              });
-            }
-          } else {
-            // Extract text and hyperlinks from each page
-            pages.forEach((page: any) => {
-              // Extract text
+          if (pdfData.Pages && Array.isArray(pdfData.Pages)) {
+            pdfData.Pages.forEach((page: any) => {
               if (page.Texts) {
                 page.Texts.forEach((text: any) => {
                   if (text.R) {
                     text.R.forEach((run: any) => {
                       if (run.T) {
-                        extractedText += decodeURIComponent(run.T) + ' ';
+                        extractedText.push(decodeURIComponent(run.T) + ' ');
                       }
                     });
                   }
                 });
               }
 
-              // Extract hyperlinks
               if (page.Links) {
                 page.Links.forEach((link: any) => {
                   if (link.uri) {
@@ -98,28 +61,79 @@ export const extractTextFromPDF = async (filePath: string): Promise<string> => {
             });
           }
 
-          // Combine text with hyperlinks
-          let finalText = extractedText.trim();
+          let finalText = extractedText.join('').trim();
           if (hyperlinks.length > 0) {
             finalText += '\n\nHyperlinks found:\n' + hyperlinks.join('\n');
           }
 
           if (!finalText) {
-            reject(new Error('No text could be extracted from PDF'));
+            resolve({
+              error: 'No text could be extracted from PDF',
+              data: null
+            });
             return;
           }
 
-          resolve(finalText);
+          resolve({
+            error: null,
+            data: finalText
+          });
         } catch (error) {
           console.error("Error processing PDF data:", error);
-          reject(new Error('Failed to process PDF data'));
+          resolve({
+            error: 'Failed to process PDF data',
+            data: null
+          });
         }
       });
 
       pdfParser.loadPDF(filePath);
     } catch (error) {
       console.error("Error extracting text from PDF:", error);
-      reject(new Error('Failed to extract text from PDF'));
+      resolve({
+        error: 'Failed to extract text from PDF',
+        data: null
+      });
     }
   });
+}
+
+export async function parseResumeWithAi(text: string): Promise<{
+  error: string | null,
+  data: any
+}> {
+  try {
+    const response = await createGenAIText(
+      `Resume Text: ${text}`,
+      resumeParserPrompt,
+      resumeReponseSchema
+    )
+
+    if (!response?.parts) {
+      return {
+        error: "No response parts found from AI",
+        data: null
+      };
+    }
+
+    const { data: parsedResponse, error } = resumeParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string));
+
+    if (error) {
+      return {
+        error: "Failed to parse AI response",
+        data: null
+      };
+    }
+
+    return {
+      error: null,
+      data: parsedResponse
+    };
+  } catch (error) {
+    console.error("Error parsing resume with AI:", error);
+    return {
+      error: "Failed to parse resume with AI.",
+      data: null
+    };
+  }
 }

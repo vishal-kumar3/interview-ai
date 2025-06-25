@@ -118,7 +118,10 @@ export async function uploadResume(formData: FormData) {
 	const session = await auth();
 
 	if (!session?.user) {
-		throw new Error("Unauthorized");
+    return {
+      error: "Unauthorized access. Please log in to upload your resume.",
+      message: "User session not found.",
+    }
 	}
 
 	const file = formData.get("file") as File;
@@ -126,15 +129,30 @@ export async function uploadResume(formData: FormData) {
 	const isDefault = formData.get("isDefault") === "true";
 
 	// save to local
-	const filePath = await saveFileToLocal(file);
-	const text = await extractTextFromPDF(filePath);
-	console.log("Extracted text from resume:", text);
-	const resumeParseData = await parseResumeWithAi(text);
-  const { error, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
+	const { data: filePath, error: saveFileError } = await saveFileToLocal(file);
+	if (saveFileError || !filePath) {
+    return {
+      error: "Failed to save file locally.",
+      data: null
+    }
+	}
+	const { data: text, error: extractTextError } = await extractTextFromPDF(filePath);
+	if (extractTextError || !text) {
+		return {
+			error: "Failed to extract text from PDF.",
+      data: null
+    };
+	}
 
-  if (error || !data) {
-    throw new Error("Failed to upload resume file to S3.");
-  }
+  const resumeParseData = await parseResumeWithAi(text);
+	const { error: uploadError, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
+
+	if (uploadError || !data) {
+		return {
+			error: "Failed to upload resume file to S3.",
+      data: null
+    };
+	}
 
   const resume = await prisma.resume.create({
 		data: {
@@ -147,7 +165,14 @@ export async function uploadResume(formData: FormData) {
 				},
 			},
 		},
-	});
+  });
+
+  if (!resume) {
+    return {
+      error: "Failed to create resume record in the database.",
+      data: null
+    };
+  }
 
 	revalidatePath("/resumes");
 	return { success: true, message: "Resume uploaded successfully!" };

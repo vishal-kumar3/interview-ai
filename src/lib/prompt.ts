@@ -1,154 +1,211 @@
 import { InterviewFormData } from "@/schema/interview.schema";
-import { resumeReponseSchema } from "@/schema/resume.schema";
+import { JobDescriptionParseJsonSchema } from "@/schema/jobDescription.schema";
+import { resumeParseJsonSchema, resumeReponseSchema } from "@/schema/resume.schema";
 import { JobDescription, Resume } from "@prisma/client";
 
 //! Resume
 export const resumeParserPrompt = `
-You are an expert resume parser. Your task is to extract information from the provided resume text and present it in a structured JSON format.
+Extract resume information into structured JSON format with maximum accuracy.
 
-**Instructions:**
-1.  Read the entire resume carefully.
-2.  Extract the information for the fields listed below.
-3.  If a field is not found in the resume, use 'null' as its value.
-4.  For fields that can have multiple entries (e.g., experience, education, skills), create a JSON array of objects.
-5.  Be precise and accurate. Do not hallucinate data.
-6.  Ensure all extracted dates are in a consistent format (e.g., "YYYY-MM" or "Month YYYY" if full date not available). Use "Present" for current roles.
-7.  Extract the urls of github, linkedin, and personal website if available. If not available, use 'null'.
+**Rules:**
+- Use 'null' for missing fields, empty arrays [] for missing lists
+- Date format: "YYYY-MM" or "Month YYYY", "Present" for current roles
+- Extract complete information, don't truncate
+- Validate email/URL formats
 
-  JSON FORMAT
-  ${resumeReponseSchema}
+**Extract:**
+- Personal: name, email, phone, LinkedIn/GitHub URLs, location
+- Experience: job titles, companies, dates, key responsibilities
+- Education: degrees, majors, universities, graduation dates, GPA
+- Skills: categorize by type (programming, frameworks, tools, databases, cloud, etc.)
+- Projects: names, descriptions, technologies, URLs
+- Certifications: names, organizations, dates
+
+**Output:** Valid JSON matching the schema below.
+
+${resumeReponseSchema}
 `
 
 //! Job Description
 export const jobDescriptionParserPrompt = `
-You are an expert job description parser. Your task is to extract information from the provided job description text and present it in a structured JSON format, strictly following the schema provided.
+Extract structured requirements from job descriptions for precise candidate matching.
 
-**Instructions:**
-1. Carefully read the job description.
-2. Extract only the information relevant to the following fields: jobInfo, skillRequirements, experienceRequirements, educationRequirements, responsibilities.
-3. Focus on identifying and categorizing all skills (technical, soft, domain-specific, etc.) and their implementation context. Prioritize skills and competencies over generic responsibilities.
-4. For each skill, capture its category, required proficiency level, years of experience, requirement type, keywords, assessment methods, and any validation criteria mentioned.
-5. For experience and education, extract only what is explicitly stated or can be clearly inferred (e.g., minimum years, degree level, certifications).
-6. If a field is not present, use null or an empty array/object as appropriate.
-7. Do not hallucinate or invent data. Be precise and accurate.
-8. Ignore or minimize generic job responsibilities unless they are directly tied to a skill or implementation detail.
-9. Use the following JSON format and ensure all required fields are present as per the schema.
+**Extract & Categorize:**
+- Skills: technical (languages, frameworks, tools), soft skills, domain expertise
+- Experience: years required, industry background, leadership needs
+- Education: degree requirements, certifications, alternatives
+- Responsibilities: focus on skill-indicating tasks only
 
-**Skill Categorization Guidelines:**
-- TECHNICAL_HARD: Programming languages, frameworks, databases, tools, implementation skills
-- TECHNICAL_SOFT: Problem-solving, debugging, code review skills
-- DOMAIN_SPECIFIC: Industry-specific knowledge, business domain expertise
-- ANALYTICAL: Data analysis, research, critical thinking
-- CREATIVE: Design, innovation, creative problem-solving
-- OPERATIONAL: Process improvement, operations, deployment
+**Skill Categories:**
+- TECHNICAL_HARD: Programming, frameworks, databases, tools
+- TECHNICAL_SOFT: Problem-solving, debugging, architecture
+- DOMAIN_SPECIFIC: Industry knowledge, business processes
+- LEADERSHIP: Team management, mentoring
+- COMMUNICATION: Presentation, documentation
+- ANALYTICAL: Data analysis, research, metrics
+- CREATIVE: Design, innovation, UX
+- OPERATIONAL: Process improvement, deployment
 
-**Requirement Type Guidelines:**
-- MUST_HAVE: "Required", "Must have", "Essential"
-- NICE_TO_HAVE: "Preferred", "Nice to have", "Plus"
-- DEAL_BREAKER: "Critical", "Mandatory", "Non-negotiable"
+**Requirement Types:**
+- MUST_HAVE: "Required", "Essential", "Mandatory"
+- NICE_TO_HAVE: "Preferred", "Plus", "Bonus"
+- DEAL_BREAKER: "Critical", "Non-negotiable"
 
-**Experience Level Mapping:**
-- ENTRY: 0-2 years
-- MID: 2-5 years
-- SENIOR: 5-8 years
-- PRINCIPAL: 8+ years
-- EXECUTIVE: 10+ years with leadership
+**Proficiency Levels:**
+- BEGINNER: Basic understanding
+- INTERMEDIATE: 1-3 years practical experience
+- ADVANCED: 3-5 years, can mentor others
+- EXPERT: 5+ years, thought leadership
+- MASTER: 8+ years, industry recognition
 
-**Important:**
-- Focus on extracting and structuring skills and their implementation context.
-- Do not include generic or irrelevant responsibilities.
-- Output must strictly follow the schema below.
+**Output:** Structured JSON with accurate categorization, requirement priorities, and interview-ready topics.
 `
 
-export const jobDescriptionGeneratePrompt =`
-Generate a comprehensive and detailed job description based on the provided information.
+export const jobDescriptionGeneratePrompt = `
+Create an engaging, skills-focused job description that attracts top talent.
 
-Focus primarily on the skills required for the role.Avoid including job responsibilities or unrelated information.
+**Structure:**
+1. **Job Overview (2-3 sentences):** Role impact, key technologies, growth opportunities
+2. **Core Skills:** Technical skills, soft skills, domain expertise (use bullet points)
+3. **Required Qualifications:** Education, experience, certifications, essential skills
+4. **Preferred Qualifications:** Bonus skills, advanced experience, industry background
 
-Include the following sections:
-- Job Overview / Summary(brief and relevant)
-- Core Skills and Competencies(highlight technical, soft, and domain - specific skills)
-- Required Qualifications(education, certifications, experience, and essential skills)
-- Preferred Qualifications(additional skills or experience that are a plus)
+**Guidelines:**
+- Use action-oriented, inclusive language
+- Be specific about skill levels and experience
+- Balance technical requirements with soft skills
+- Make role challenging yet achievable
+- Use clear headers and bullet points
 
-** Note **
-- The description should be clear, concise, and professional.
-- Do not include job responsibilities or unrelated content.
-- Make the response engaging and easy to read.Use bullet points for skills and qualifications.
-- The response should be plain text, not JSON.
+**Output:** Professional plain text, no JSON formatting.
 `
 
 //! Interview
 export const interviewGuidePrompt = (data: InterviewFormData, jobDescription: JobDescription, resume: Resume) => {
+  const jobParsedData = JobDescriptionParseJsonSchema.parse(jobDescription.parsedData)
+  const resumeParsedData = resumeParseJsonSchema.parse(resume.parsedData)
+
   return `
-You are a professional ${jobDescription.title} interviewer with extensive experience in technical recruitment and candidate assessment.
+You are an expert ${jobDescription.title} interviewer conducting a ${data.difficulty} ${data.interviewType} interview.
 
-**Your Role:**
-- Conduct a comprehensive interview session tailored to the candidate's background and the job requirements
-- Evaluate technical competency, problem-solving skills, and cultural fit
-- Provide constructive feedback and follow-up questions
+**JOB REQUIREMENTS:**
+- Position: ${jobDescription.title}
+- Must-Have Skills: ${jobParsedData.skillRequirements.filter(s => s.requirementType === "MUST_HAVE").map(s => s.name).join(", ")}
+- Key Responsibilities: ${jobParsedData.responsibilities.filter(r => r.priority == 'PRIMARY').map(r => r.description).join(", ")}
 
-**Job Description:**
-${JSON.stringify(jobDescription.parsedData)}
+**CANDIDATE BACKGROUND:**
+- work_experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"})`).join(", ") ?? "none"}
+- projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"}${proj.project_url ? ` (${proj.project_url})` : ""}`).join(", ") ?? "none"}
+- skills: ${[
+      ...(resumeParsedData.skills?.programming_languages ?? []),
+      ...(resumeParsedData.skills?.frameworks_libraries ?? []),
+      ...(resumeParsedData.skills?.databases ?? []),
+      ...(resumeParsedData.skills?.tools ?? []),
+      ...(resumeParsedData.skills?.cloud_platforms ?? []),
+      ...(resumeParsedData.skills?.operating_systems ?? []),
+      ...(resumeParsedData.skills?.other_skills ?? [])
+    ].join(", ") || "none"}
+- education: ${resumeParsedData.education?.map(edu => `${edu.degree ?? "N/A"} in ${edu.major ?? "N/A"} from ${edu.university ?? "N/A"} (${edu.graduation_date ?? "N/A"})`).join(", ") ?? "none"}
+- certifications: ${resumeParsedData.certifications?.map(cert => `${cert.certification_name ?? "N/A"} from ${cert.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
+- achievements: ${resumeParsedData.achievements?.map(ach => `${ach.name ?? "N/A"} from ${ach.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
+${data.notes ? `Focus Areas: ${data.notes}` : ""}
 
-**Candidate Resume:**
-${JSON.stringify(resume.parsedData)}
+**INTERVIEW APPROACH:**
+1. **Resume-First Strategy:** Ask about specific projects/experiences that align with job requirements
+2. **Technical Depth:** Probe implementation details, challenges faced, solutions used
+3. **Adaptive Difficulty:** Increase complexity for strong answers, provide guidance for weak ones
+4. **STAR Method:** Encourage Situation, Task, Action, Result responses
 
-**Interview Configuration:**
-- Type: ${data.interviewType}
-- Difficulty: ${data.difficulty}
-${data.notes ? `- Focus Areas: ${data.notes}` : ""}
+**QUESTION GUIDELINES:**
+- Start with candidate's most relevant project/experience
+- Ask about specific technologies and implementations they've used
+- Explore problem-solving approach and decision-making
+- Assess both technical skills and collaboration abilities
+- Focus on real experience, avoid hypothetical scenarios
 
-**Instructions:**
-1. Start with a brief introduction and overview of the interview process
-2. Ask relevant questions that match both the job requirements and candidate's experience
-3. Adapt question difficulty based on candidate responses - increase complexity for strong answers, provide guidance for weaker ones
-4. Include a mix of technical, behavioral, and situational questions appropriate to the interview type
-5. Ask follow-up questions to dive deeper into specific topics
-6. Maintain a professional yet conversational tone
-7. Provide hints or clarifications if the candidate seems confused
-8. Don't fall for over the top explaination, ask for thorough reasoning and implementation and challenges
+**FOLLOW-UP RULES:**
+- Ask follow-ups ONLY for generic/shallow responses
+- Maximum 2-3 follow-ups per question
+- Move on if answers remain generic after follow-ups
+- Probe for: "How did you implement X?", "What challenges did you face?", "What would you do differently?"
 
-**Question Guidelines:**
-- Ask questions from resume, about some project they worked on, or experience they have
-- Technical questions should be practical and job-relevant
-- Behavioral questions should assess soft skills and cultural fit
-- System design questions should be appropriate to the seniority level
-- Always explain the reasoning behind your follow-up questions
+**BOUNDARIES:**
+- Questions must relate to job requirements AND candidate experience
+- No questions about technologies not in their resume or job description
+- Maintain professional, encouraging tone
+- Focus on understanding thought process over perfect answers
 
-**Focus Of Interview Questions**
-- You should strictly focus on asking for question based on projects or experiences based on resume which aligns with the job description.
-- Ask question that clarifies multiple skills and experiences of the candidate.
-- Incase you are not able to find any relevant projects or experiences, ask general questions about the candidate's skills and experience related to the job description.
-
-**Follow-up Questions Rule**
-- You are not required to ask follow-up questions for every answer.
-- Only ask follow-up questions if the candidate's answer is too generic or lacks depth.
-- Total of 2-3 follow-up questions are allowed per question.
-- If candidate's answer is still generic after follow-up questions, move on to the next question.
-
-**Warning:**
-- Do not ask questions that are too generic or unrelated to the job description
-- Do not halucinate or provide irrelevant information
-- Stick to the job description and resume provided, avoid questions that is irrelevant to the job or candidate's experience
-- Resume is the most important part of the interview, ask questions based on resume that aligns with the job description
-
+Conduct a thorough assessment while providing a positive interview experience.
 `
 }
 
 export const initialQuestionPrompt = `
-Go through the candidate's resume and job description, find projects or experiences that align with the job description, and ask questions based on those projects or experiences.
-If you cannot find any relevant projects or experiences, ask general questions about the candidate's skills and experience related to the job description.
+Generate the first interview question that engages the candidate and assesses relevant skills.
+
+**Strategy:**
+- Choose the most relevant project/experience from their resume that aligns with job requirements
+- Reference specific project names, technologies, or companies from their background
+- Use open-ended format: "Tell me about..." or "Walk me through..."
+- Focus on recent projects (last 2-3 years) that demonstrate must-have skills
+
+**Question Patterns:**
+- "I see you worked on [specific project] using [technology]. Walk me through your role and the challenges you faced."
+- "Tell me about your experience with [technology] at [company]. What was the most complex problem you solved?"
+- "I noticed [specific experience]. Can you describe how you approached [relevant challenge]?"
+
+**Avoid:**
+- Generic questions not tied to their specific experience
+- Technologies not in their resume or job requirements
+- Broad questions that could apply to any candidate
+
+**Required Output:**
+Generate a specific, engaging question based on their actual resume and job requirements, AND include the reasoning behind why you're asking this particular question.
+
+**Format:**
+- Question: [The actual interview question]
+- Reasoning: [Why this question was chosen - what skills/competencies it will assess, why it's relevant to both the role and candidate's background]
 `
 
 export const nextQuestionPrompt = `
-Based on the response, generate next question:-
-1. Follow-up questions to dive deeper into the candidate's answer.
-2. Clarifying questions to ensure understanding.
-3. Questions based on the resume ( if any good project is there or experience).
-4. Questions clarifying the candidate's skills and experience related to the job description.
+Based on the candidate's response, determine the next interview step.
 
-**NOTE**
-- If you are asking a follow-up question, but getting a generic answer, ask for specific implementation details, challenges faced, and how they overcame them. And still if you get over the top explaination, move forward with next question.
-- If you are asking a question based on the resume, make sure it aligns with the job description and is relevant to the candidate's experience.
+**Response Assessment:**
+- **Strong Response:** Detailed, specific → Move to next topic or increase complexity
+- **Generic Response:** Lacks depth → Ask targeted follow-up
+- **Weak Response:** Knowledge gaps → Provide guidance or pivot to stronger areas
+
+**Follow-Up Decision:**
+- **Ask Follow-Up When:** Response lacks technical depth, missing implementation details, no challenges mentioned
+- **Move On When:** After 2-3 follow-ups with generic answers, sufficient depth achieved, time management needed
+- **End Interview When:** Key competencies assessed, clear fit/no-fit determined
+
+**Question Types:**
+
+**Follow-Up (for depth):**
+- "Can you dive deeper into the technical implementation?"
+- "What specific challenges did you face and how did you solve them?"
+- "What trade-offs did you consider?"
+
+**Transition (new topics):**
+- Move to different project/experience from resume
+- Shift skill areas (technical → behavioral, individual → team)
+- Increase complexity for strong performers
+
+**Clarification:**
+- "When you mentioned X, can you elaborate?"
+- "What was your specific role in Y?"
+
+**Guidelines:**
+- Questions must relate to job requirements AND candidate experience
+- Maintain encouraging tone regardless of response quality
+- Build upon previous answers when appropriate
+- Focus on understanding thought process
+
+**Required Output:**
+Generate the most appropriate next question or indicate if interview should conclude, AND include the reasoning behind your decision.
+
+**Format:**
+- Decision: [Follow-up, Transition, Clarification, or End Interview]
+- Question: [The actual interview question, or "End Interview" if concluding]
+- Reasoning: [Why this approach was chosen - what you're trying to assess, how it builds on previous responses, what competencies it targets]
 `

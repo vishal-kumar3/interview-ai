@@ -1,3 +1,4 @@
+
 export function formatDateAgo(date: Date): string {
 	const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
 
@@ -20,6 +21,23 @@ export function formatDateAgo(date: Date): string {
 
 	return 'just now';
 }
+
+export const formatTimeRemaining = (futureDate: Date): string => {
+  const now = new Date();
+  const timeDiff = futureDate.getTime() - now.getTime();
+
+  if (timeDiff <= 0) {
+    return "You can create a new interview now";
+  }
+
+  const days = Math.ceil(timeDiff / (24 * 60 * 60 * 1000));
+
+  if (days === 1) {
+    return "1 day";
+  } else {
+    return `${days} days`;
+  }
+};
 
 export function formatMonth(month: string): string {
   const months: { [key: string]: string } = {

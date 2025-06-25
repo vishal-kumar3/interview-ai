@@ -5,26 +5,56 @@ import fs from "fs";
 
 
 
-export const saveFileToLocal = async (file: File) => {
-
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const filePath = `./public/temp/${file.name}`;
-  fs.writeFileSync(filePath, buffer);
-
-  return filePath;
+export const saveFileToLocal = async (file: File): Promise<{
+  error: string | null,
+  data: string | null
+}> => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const filePath = `./public/temp/${file.name}`;
+    fs.writeFileSync(filePath, buffer);
+    return {
+      error: null,
+      data: filePath
+    };
+  } catch (error) {
+    console.error("Error saving file to local:", error);
+    return {
+      error: "Failed to save file locally.",
+      data: null
+    };
+  }
 }
 
 
-export const saveBlobToLocal = async (blob: Blob | undefined, fileName: string): Promise<string> => {
+export const saveBlobToLocal = async (blob: Blob | undefined, fileName: string): Promise<{
+  error: string | null,
+  data: string | null
+}> => {
   if (!blob) {
-    throw new Error("No file provided to save.");
+    return {
+      error: "No file provided to save.",
+      data: null
+    };
   }
-  const arrayBuffer = await blob.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const filePath = `./public/temp/${fileName}`;
-  fs.writeFileSync(filePath, buffer);
-  return filePath;
+
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const filePath = `./public/temp/${fileName}`;
+    fs.writeFileSync(filePath, buffer);
+    return {
+      error: null,
+      data: filePath
+    };
+  } catch (error) {
+    console.error("Error saving blob to local:", error);
+    return {
+      error: "Failed to save file locally.",
+      data: null
+    };
+  }
 }
 
 export const fileToS3 = async (
@@ -40,16 +70,20 @@ export const fileToS3 = async (
 }> => {
   try {
     const key = `${entitytype}/${Date.now()}-${fileName}`;
-
     const fileContent = fs.readFileSync(filePath);
-
     const { error, data } = await uploadFileToS3(fileContent, key);
-
     return { error, data }
   } catch (error) {
     console.error("Error uploading file to S3:", error);
-    throw new Error("Failed to upload file to S3.");
+    return {
+      error: "Failed to upload file to S3.",
+      data: null
+    };
   } finally {
-    fs.unlinkSync(filePath);
+    try {
+      fs.unlinkSync(filePath);
+    } catch (unlinkError) {
+      console.error("Error deleting temporary file:", unlinkError);
+    }
   }
 };
