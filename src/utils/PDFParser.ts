@@ -1,7 +1,6 @@
 import { createGenAIText } from "@/config/gemini.config";
 import { resumeParserPrompt } from "@/lib/prompt";
 import { resumeParseJsonSchema, resumeReponseSchema } from "@/schema/resume.schema";
-import fs from "fs";
 
 // Type definitions for pdf2json
 interface PDFParser {
@@ -11,7 +10,7 @@ interface PDFParser {
 }
 
 interface PDFParserConstructor {
-  new (): PDFParser;
+  new(): PDFParser;
 }
 
 const PDFParser = require("pdf2json") as PDFParserConstructor;
@@ -103,22 +102,22 @@ export async function parseResumeWithAi(text: string): Promise<{
   data: any
 }> {
   try {
-    const response = await createGenAIText(
+    const { content: response, error: aiError } = await createGenAIText(
       `Resume Text: ${text}`,
       resumeParserPrompt,
       resumeReponseSchema
     )
 
-    if (!response?.parts) {
+    if (aiError || !response?.parts) {
       return {
         error: "No response parts found from AI",
         data: null
       };
     }
 
-    const { data: parsedResponse, error } = resumeParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string));
+    const { data: parsedResponse, error: parseError } = resumeParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string));
 
-    if (error) {
+    if (parseError || !parsedResponse) {
       return {
         error: "Failed to parse AI response",
         data: null

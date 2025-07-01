@@ -6,7 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Resume } from "@prisma/client";
 import { VariantProps } from "class-variance-authority";
-import { Download, Eye, Trash2, Star, Edit } from "lucide-react";
+import { Download, Trash2, Edit } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ResumePreviewModal } from "@/components/resume/resumePreviewModal";
@@ -22,8 +22,13 @@ const ResumePreviewButton = (props: CLinkProps) => {
 
   const handleClick = async () => {
     try {
-      const resumeUrl = await previewResumeByKey(resumeKey);
-      window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+      const { signedUrl, error } = await previewResumeByKey(resumeKey);
+      if (error || !signedUrl) {
+        toast.error("Failed to preview resume");
+        console.error('Error previewing resume:', error);
+        return;
+      }
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error opening resume preview:', error);
     }
@@ -47,8 +52,12 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
 
   const handlePreviewClick = async () => {
     try {
-      const resumeUrl = await previewResumeByKey(resume.fileName);
-      window.open(resumeUrl, '_blank', 'noopener,noreferrer');
+      const { signedUrl, error } = await previewResumeByKey(resume.fileName);
+      if (error || !signedUrl) {
+        console.error('Error previewing resume:', error);
+        return;
+      }
+      window.open(signedUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error opening resume preview:', error);
     }
@@ -56,10 +65,14 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
 
   const handleDownloadClick = async () => {
     try {
-      const downloadUrl = await previewResumeByKey(resume.fileName);
+      const { signedUrl, error } = await previewResumeByKey(resume.fileName);
+      if (error || !signedUrl) {
+        console.error('Error fetching download URL:', error);
+        return;
+      }
 
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = signedUrl;
       link.download = resume.fileName;
       link.style.display = 'none';
 
@@ -73,7 +86,12 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
 
   const handleDeleteClick = async () => {
     try {
-      const deleted = await deleteResume(resume.id);
+      const { success, error } = await deleteResume(resume.id, resume.fileName);
+      if (error || !success) {
+        console.error('Error deleting resume:', error);
+        toast.error("Failed to delete resume");
+        return;
+      }
       setIsDeleteDialogOpen(false);
       toast.success("Resume deleted successfully");
     } catch (error) {

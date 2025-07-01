@@ -24,9 +24,14 @@ export const createAiCompletion = async (
 
 
     const response = await client.chat.completions.create(query);
-    return response.choices[0].message.content;
+    return {
+      error: null,
+      response: response.choices[0].message.content
+    }
   } catch (error) {
-    console.error("Error creating AI completion:", error);
-    throw error;
+    return {
+      error: "Failed to create AI completion",
+      response: null,
+    }
   }
 }

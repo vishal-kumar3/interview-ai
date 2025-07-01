@@ -9,6 +9,7 @@ export default redis
 
 export enum RedisCachePrefix {
   INTERVIEW = 'interview_chat',
+  RESUME = 'resume',
 }
 
 export const createCacheKey = (prefix: RedisCachePrefix, id: string) => {
@@ -16,7 +17,7 @@ export const createCacheKey = (prefix: RedisCachePrefix, id: string) => {
 }
 
 export const redisCache = {
-  client: redis, // Add direct access to Redis client
+  client: redis,
 
   get: async (key: string) => {
     try {

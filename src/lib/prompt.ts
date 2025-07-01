@@ -14,70 +14,130 @@ Extract resume information into structured JSON format with maximum accuracy.
 - Validate email/URL formats
 
 **Extract:**
-- Personal: name, email, phone, LinkedIn/GitHub URLs, location
+- Personal: name, email, phone, LinkedIn/GitHub/Portfolio URLs, location
 - Experience: job titles, companies, dates, key responsibilities
 - Education: degrees, majors, universities, graduation dates, GPA
 - Skills: categorize by type (programming, frameworks, tools, databases, cloud, etc.)
 - Projects: names, descriptions, technologies, URLs
 - Certifications: names, organizations, dates
-
-**Output:** Valid JSON matching the schema below.
-
-${resumeReponseSchema}
 `
 
 //! Job Description
 export const jobDescriptionParserPrompt = `
-Extract structured requirements from job descriptions for precise candidate matching.
+Extract structured technical requirements from job descriptions for precise interview assessment.
 
-**Extract & Categorize:**
-- Skills: technical (languages, frameworks, tools), soft skills, domain expertise
-- Experience: years required, industry background, leadership needs
-- Education: degree requirements, certifications, alternatives
-- Responsibilities: focus on skill-indicating tasks only
+**Extract & Prioritize Technical Information:**
+- Technical Skills: Programming languages, frameworks, tools with specific versions and experience levels
+- Experience: Years of technical experience required, project complexity, scale
+- Technical Responsibilities: Implementation tasks, coding, architecture, testing
+- Education: Technical degrees, certifications, equivalent experience options
 
-**Skill Categories:**
-- TECHNICAL_HARD: Programming, frameworks, databases, tools
-- TECHNICAL_SOFT: Problem-solving, debugging, architecture
-- DOMAIN_SPECIFIC: Industry knowledge, business processes
-- LEADERSHIP: Team management, mentoring
-- COMMUNICATION: Presentation, documentation
-- ANALYTICAL: Data analysis, research, metrics
-- CREATIVE: Design, innovation, UX
-- OPERATIONAL: Process improvement, deployment
+**Skill Categories (Must Use Exactly):**
+- TECHNICAL: Programming languages, frameworks, databases, tools, platforms, architecture
+- SOFT_SKILL: Problem-solving, debugging, technical communication, code review
+- DOMAIN_KNOWLEDGE: Industry-specific technical knowledge, business logic
+- LEADERSHIP: Technical mentorship, code reviews, architecture decisions
 
-**Requirement Types:**
-- MUST_HAVE: "Required", "Essential", "Mandatory"
-- NICE_TO_HAVE: "Preferred", "Plus", "Bonus"
-- DEAL_BREAKER: "Critical", "Non-negotiable"
+**Requirement Types (Must Use Exactly):**
+- MUST_HAVE: "Required", "Essential", core technologies
+- NICE_TO_HAVE: "Preferred", "Plus", additional technologies
+- DEAL_BREAKER: "Critical", "Non-negotiable", absolute requirements
 
-**Proficiency Levels:**
-- BEGINNER: Basic understanding
+**Proficiency Levels (Must Use Exactly):**
+- BEGINNER: 0-1 years, basic understanding
 - INTERMEDIATE: 1-3 years practical experience
-- ADVANCED: 3-5 years, can mentor others
-- EXPERT: 5+ years, thought leadership
-- MASTER: 8+ years, industry recognition
+- ADVANCED: 3-5 years, implementation expertise
+- EXPERT: 5+ years, deep technical knowledge
 
-**Output:** Structured JSON with accurate categorization, requirement priorities, and interview-ready topics.
+**Weight System (1-10):**
+- 9-10: Core technical skills (main programming languages, frameworks)
+- 7-8: Important secondary skills (databases, cloud platforms)
+- 5-6: Helpful technical skills (testing frameworks, CI/CD)
+- 3-4: Nice-to-have technologies
+- 1-2: Minor technical preferences
+
+**Priority Levels for Responsibilities (Must Use Exactly):**
+- PRIMARY: Core coding and technical tasks
+- SECONDARY: Supporting technical activities
+- OPTIONAL: Occasional technical responsibilities
+
+**Complexity Levels (Must Use Exactly):**
+- HIGH: Advanced technical challenges, architecture design
+- MEDIUM: Standard implementation complexity
+- LOW: Routine technical tasks
+
+**Technical Focus:**
+- Extract specific versions of technologies (e.g., "React 18+", "Python 3.9+")
+- Note years of experience required for each technology
+- Identify technical implementation responsibilities
+- Determine technical problem complexity
+- Focus on interview-assessable technical skills
+
+**Output Format:** Generate structured JSON that precisely follows the schema with accurate technical assessment data suitable for interview preparation.
 `
 
 export const jobDescriptionGeneratePrompt = `
-Create an engaging, skills-focused job description that attracts top talent.
+Create a technical-focused job description optimized for skills assessment and interview preparation.
 
-**Structure:**
-1. **Job Overview (2-3 sentences):** Role impact, key technologies, growth opportunities
-2. **Core Skills:** Technical skills, soft skills, domain expertise (use bullet points)
-3. **Required Qualifications:** Education, experience, certifications, essential skills
-4. **Preferred Qualifications:** Bonus skills, advanced experience, industry background
+**Structure Requirements:**
 
-**Guidelines:**
-- Use action-oriented, inclusive language
-- Be specific about skill levels and experience
-- Balance technical requirements with soft skills
-- Make role challenging yet achievable
-- Use clear headers and bullet points
+1. **Job Overview (2-3 sentences):**
+   - Core technical responsibilities and impact
+   - Primary technology stack and architecture
+   - Technical challenges and problem-solving focus
 
-**Output:** Professional plain text, no JSON formatting.
+2. **Required Technical Skills (Be Extremely Specific):**
+   - Programming Languages: With years and proficiency (e.g., "Python (3+ years, Advanced)", "JavaScript ES6+ (Expert level)")
+   - Frameworks & Libraries: Versions and depth (e.g., "React 18+ with Hooks", "Django REST Framework 3.x", "Spring Boot 2.7+")
+   - Databases: Specific technologies and skills (e.g., "PostgreSQL (complex queries, indexing)", "Redis (caching strategies)", "MongoDB (aggregation pipelines)")
+   - Development Tools: Proficiency required (e.g., "Git (branching strategies)", "Docker (container orchestration)", "Jenkins (CI/CD pipelines)")
+   - Cloud Platforms: Specific services (e.g., "AWS (EC2, RDS, S3, Lambda)", "Azure (App Service, SQL Database)", "GCP (Compute Engine, Cloud Functions)")
+   - Testing: Frameworks and approaches (e.g., "Jest (unit testing)", "Cypress (E2E testing)", "TDD methodology")
+
+3. **Preferred Technical Skills:**
+   - Advanced frameworks and tools
+   - Emerging technologies relevant to role
+   - Performance optimization techniques
+   - Architecture patterns and design principles
+
+4. **Core Technical Responsibilities:**
+   - Software development and coding tasks
+   - System design and architecture decisions
+   - Code review and quality assurance
+   - Performance optimization and debugging
+   - Database design and query optimization
+   - API development and integration
+   - Testing strategy and implementation
+   - Deployment and DevOps practices
+
+5. **Experience Requirements:**
+   - Total years in software development
+   - Years with specific technologies
+   - Project complexity handled (e.g., "high-traffic applications", "distributed systems")
+   - Scale of applications worked on (e.g., "10k+ users", "microservices architecture")
+
+6. **Technical Challenges You'll Solve:**
+   - Specific problems the role addresses
+   - Performance and scalability challenges
+   - Integration and system design challenges
+   - Technical debt and optimization opportunities
+
+**Writing Guidelines:**
+- Focus 80% on technical skills and responsibilities
+- Use specific technology versions and requirements
+- Include measurable experience levels (years, scale, complexity)
+- Emphasize hands-on coding and technical problem-solving
+- Make every requirement testable in an interview setting
+- Avoid generic soft skills unless directly technical (e.g., "technical communication")
+
+**Optimization for Assessment:**
+- Each skill should be interview-assessable
+- Include specific technologies that can be tested
+- Focus on practical, hands-on experience
+- Structure for easy technical question generation
+- Emphasize real-world problem-solving scenarios
+
+**Output:** Technical job description focused on assessable skills, coding expertise, and technical problem-solving capabilities.
 `
 
 //! Interview
@@ -94,6 +154,7 @@ You are an expert ${jobDescription.title} interviewer conducting a ${data.diffic
 - Key Responsibilities: ${jobParsedData.responsibilities.filter(r => r.priority == 'PRIMARY').map(r => r.description).join(", ")}
 
 **CANDIDATE BACKGROUND:**
+- Name: ${resumeParsedData.personal_details?.name ?? "N/A"}
 - work_experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"})`).join(", ") ?? "none"}
 - projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"}${proj.project_url ? ` (${proj.project_url})` : ""}`).join(", ") ?? "none"}
 - skills: ${[
@@ -140,72 +201,75 @@ Conduct a thorough assessment while providing a positive interview experience.
 }
 
 export const initialQuestionPrompt = `
-Generate the first interview question that engages the candidate and assesses relevant skills.
+Generate the first interview question using ACTUAL specific details from the candidate's resume and job requirements.
 
-**Strategy:**
-- Choose the most relevant project/experience from their resume that aligns with job requirements
+**CRITICAL: Use Real Data, Not Placeholders**
+- Use the actual project name (e.g., "your e-commerce platform" not "[specific project]")
+- Use the actual technology (e.g., "React and Node.js" not "[technology]")
+- Use the actual company name (e.g., "at Microsoft" not "[company]")
+- Reference specific details from their resume
+
+**Question Strategy:**
+- Choose the most relevant project/experience that aligns with job requirements
 - Reference specific project names, technologies, or companies from their background
 - Use open-ended format: "Tell me about..." or "Walk me through..."
 - Focus on recent projects (last 2-3 years) that demonstrate must-have skills
 
-**Question Patterns:**
-- "I see you worked on [specific project] using [technology]. Walk me through your role and the challenges you faced."
-- "Tell me about your experience with [technology] at [company]. What was the most complex problem you solved?"
-- "I noticed [specific experience]. Can you describe how you approached [relevant challenge]?"
+**Example Good Questions:**
+- "I see you built a React-based dashboard at TechCorp that handled real-time data. Walk me through your approach to managing state and handling performance challenges."
+- "Tell me about your microservices architecture project using Docker and Kubernetes. What were the main scalability challenges you solved?"
+- "I noticed your machine learning project for fraud detection using Python and TensorFlow. How did you approach the data preprocessing and model selection?"
 
-**Avoid:**
-- Generic questions not tied to their specific experience
-- Technologies not in their resume or job requirements
-- Broad questions that could apply to any candidate
+**Example Bad Questions (Avoid These):**
+- "Tell me about your experience with [technology]"
+- "Walk me through [specific project]"
+- "Can you describe your work at [company]"
+
+**Requirements:**
+- Must use actual names/technologies from candidate's resume
+- Must relate to job requirements
+- Must be specific and engaging
+- No placeholders or generic references
 
 **Required Output:**
-Generate a specific, engaging question based on their actual resume and job requirements, AND include the reasoning behind why you're asking this particular question.
-
-**Format:**
-- Question: [The actual interview question]
-- Reasoning: [Why this question was chosen - what skills/competencies it will assess, why it's relevant to both the role and candidate's background]
+- Question: [Specific question using actual resume data]
+- Reasoning: [Why this specific project/technology was chosen and what competencies it assesses]
 `
 
 export const nextQuestionPrompt = `
-Based on the candidate's response, determine the next interview step.
+Based on the candidate's response, determine the next interview step using SPECIFIC details from their background.
+
+**CRITICAL: Use Real Data, Not Placeholders**
+- Reference actual project names, technologies, and companies from their resume
+- Build upon specific details mentioned in previous responses
+- No generic placeholders like "[technology]" or "[project]"
 
 **Response Assessment:**
 - **Strong Response:** Detailed, specific → Move to next topic or increase complexity
-- **Generic Response:** Lacks depth → Ask targeted follow-up
-- **Weak Response:** Knowledge gaps → Provide guidance or pivot to stronger areas
+- **Generic Response:** Lacks depth → Ask targeted follow-up with specific details
+- **Weak Response:** Knowledge gaps → Provide guidance or pivot to their stronger areas
 
-**Follow-Up Decision:**
-- **Ask Follow-Up When:** Response lacks technical depth, missing implementation details, no challenges mentioned
-- **Move On When:** After 2-3 follow-ups with generic answers, sufficient depth achieved, time management needed
-- **End Interview When:** Key competencies assessed, clear fit/no-fit determined
+**Follow-Up Examples (Use Actual Data):**
+Instead of: "Can you dive deeper into the technical implementation of X?"
+Use: "You mentioned using Redis for caching in your e-commerce project. Can you walk me through how you handled cache invalidation and data consistency?"
 
-**Question Types:**
+Instead of: "What challenges did you face with Y?"
+Use: "With your Node.js API that you built at StartupXYZ, what were the specific performance bottlenecks you encountered when scaling to handle 10k+ concurrent users?"
 
-**Follow-Up (for depth):**
-- "Can you dive deeper into the technical implementation?"
-- "What specific challenges did you face and how did you solve them?"
-- "What trade-offs did you consider?"
-
-**Transition (new topics):**
-- Move to different project/experience from resume
-- Shift skill areas (technical → behavioral, individual → team)
-- Increase complexity for strong performers
-
-**Clarification:**
-- "When you mentioned X, can you elaborate?"
-- "What was your specific role in Y?"
+**Transition Examples (Use Actual Data):**
+- Move to different specific project from their resume
+- Reference actual technologies they've used
+- Build on previous technical discussions with specific follow-ups
 
 **Guidelines:**
-- Questions must relate to job requirements AND candidate experience
+- Questions must use actual project names and technologies from their resume
+- Build upon specific details from previous answers
+- Reference actual companies, tools, and implementations mentioned
 - Maintain encouraging tone regardless of response quality
-- Build upon previous answers when appropriate
-- Focus on understanding thought process
+- Focus on understanding their actual experience
 
 **Required Output:**
-Generate the most appropriate next question or indicate if interview should conclude, AND include the reasoning behind your decision.
-
-**Format:**
 - Decision: [Follow-up, Transition, Clarification, or End Interview]
-- Question: [The actual interview question, or "End Interview" if concluding]
-- Reasoning: [Why this approach was chosen - what you're trying to assess, how it builds on previous responses, what competencies it targets]
+- Question: [Specific question using actual resume/response data, or "End Interview"]
+- Reasoning: [Why this approach targets specific competencies based on their actual background]
 `

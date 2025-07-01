@@ -284,7 +284,10 @@ export const getInterviewChatSession = async (interviewId: string) => {
     });
 
     if (!interviewSession) {
-      throw new Error("Interview session not found");
+      return {
+        error: "Interview session not found",
+        chat: null
+      }
     }
 
     const chat = await createGenAIChat(
@@ -293,21 +296,31 @@ export const getInterviewChatSession = async (interviewId: string) => {
       GeminiQuestionUnionSchema
     );
 
-    return chat;
+    return {
+      error: null,
+      chat: chat
+    };
   }
 
-  return await createChatFromConfig(getCacheChat as RedisChat);
+  return {
+    error: null,
+    chat: await createChatFromConfig(getCacheChat as RedisChat)
+  };
 }
 
 export const nextQuestion = async (interviewId: string) => {
-  const chat = await getInterviewChatSession(interviewId)
+  const { error, chat } = await getInterviewChatSession(interviewId)
+
+  if (error || !chat) {
+    return { data: null, error: error, end: false }
+  }
 
   const nextQuestion = await chat.sendMessage({
     message: "please go ahead with either a follow-up if required or the next question for the interview."
   })
 
-  const { data, error, success } = aiQuestionSchema.safeParse(JSON.parse(nextQuestion.text ?? "{}"))
-  if (!data || error || !success) {
+  const { data, error: questionError, success } = aiQuestionSchema.safeParse(JSON.parse(nextQuestion.text ?? "{}"))
+  if (!data || questionError || !success) {
     return { data: null, error: "Error while generating next question, please try again." }
   }
 
@@ -333,11 +346,4 @@ export const nextQuestion = async (interviewId: string) => {
 
 
   return { data: question, error: null, end: false }
-}
-
-
-export const generateTranscript = async () => {
-
-  // const uploadtedFile = await
-
 }

@@ -252,7 +252,14 @@ export const endInterviewSession = async (interviewId: string) => {
   }
 
   if (!interview.interviewFeedback) {
-    const chat = await getInterviewChatSession(interviewId)
+    const { chat, error: chatError } = await getInterviewChatSession(interviewId)
+
+    if (chatError || !chat) {
+      return {
+        error: "Failed to create chat session",
+        data: null
+      }
+    }
 
     const overallFeedback = await chat.sendMessage({
       message: "Please provide overall feedback for the interview session.",
@@ -266,7 +273,7 @@ export const endInterviewSession = async (interviewId: string) => {
     const aiContext = chat.getHistory()
 
     // TODO: do this one in background job
-    await prisma.sessionMetadata.update({
+    const interviewSessionMetadata = await prisma.sessionMetadata.update({
       where: { sessionId: interviewId },
       data: {
         aiPromptContext: aiContext
@@ -274,9 +281,15 @@ export const endInterviewSession = async (interviewId: string) => {
           .map(content => JSON.parse(JSON.stringify(content)))
       }
     }).catch(err => {
-      console.error("Error updating session metadata:", err);
       return null;
     })
+
+    if (!interviewSessionMetadata) {
+      return {
+        error: "Failed to update session metadata",
+        data: null
+      }
+    }
 
     redisCache.set(
       createCacheKey(RedisCachePrefix.INTERVIEW, interviewId),
