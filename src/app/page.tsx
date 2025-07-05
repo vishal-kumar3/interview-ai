@@ -1,10 +1,9 @@
+import LandingPage from "@/components/landing-page";
 
 
 export default function Page() {
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold">Welcome to the Interview App</h1>
-    </div>
+    <LandingPage />
   )
 }
