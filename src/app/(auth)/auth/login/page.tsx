@@ -1,3 +1,4 @@
+"use server"
 import LoginForm from "@/components/form/auth/LoginForm";
 
 type props = {};

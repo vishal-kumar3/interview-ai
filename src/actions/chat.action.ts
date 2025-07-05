@@ -46,6 +46,9 @@ export const generateInitialQuestion = async (interviewId: string) => {
   }
 
   const question = await pushInterviewQuestion(interviewId, data)
+  if (!question) {
+    return { data: null, error: "Failed to save question" }
+  }
 
   redisCache.set(
     createCacheKey(RedisCachePrefix.INTERVIEW, interviewId),
@@ -73,8 +76,6 @@ export const submitInterviewResponse = async (
 
   if (audioResponse) {
     const { error: transcriptError, data: transcriptData } = await transcriptFromAudio(audioResponse.filePath, audioResponse.fileType);
-    // TODO: if this fails, retry logic.
-
     if (transcriptError || !transcriptData) {
       return {
         error: transcriptError || "Failed to upload audio or generate transcript",
@@ -83,8 +84,6 @@ export const submitInterviewResponse = async (
       }
     }
 
-    // File storage logic and transcript generation
-    // TODO: S3 upload logic:- maybe background job for this
     const { error: s3Error, data: s3Data } = await fileToS3(
       audioResponse.filePath,
       `audio-${interviewId}-${questionId}.wav`,
@@ -105,7 +104,6 @@ export const submitInterviewResponse = async (
     }
   }
 
-  //TODO: Ensure if the audio response is uploaded to s3 and transcripted before saving
   const savedResponse = await prisma.response.create({
     data: {
       questionId: questionId,
@@ -142,7 +140,6 @@ export const submitInterviewResponse = async (
 
   const { data: feedbackData, error: feedbackError } = feedbackResponseSchema.safeParse(JSON.parse(feedbackGeminiData.text ?? "{}"))
 
-  //TODO: Implement AI analysis of the response, retry if there is error
   const feedback = await prisma.feedback.create({
     data: {
       responseId: savedResponse.id,
@@ -151,7 +148,6 @@ export const submitInterviewResponse = async (
     }
   }).catch(err => null)
 
-  //TODO: Maybe retry this part.
   if (!feedback) {
     return {
       error: "Failed to generate feedback",
@@ -160,7 +156,6 @@ export const submitInterviewResponse = async (
     }
   }
 
-  //TODO: prepare for interview end, follow-up question, next question.
   const nextQuestion = await chat.sendMessage({
     message: "Based on the response, please go ahead with either a follow-up if required or the next question for the interview. Or if you think the interview is complete, please end the interview.",
     config: {
@@ -171,7 +166,6 @@ export const submitInterviewResponse = async (
   })
 
   const { data: nextQuestionData, error: nextQuestionError } = aiQuestionSchema.safeParse(JSON.parse(nextQuestion.text ?? "{}"))
-
   if (!nextQuestionData || nextQuestionError) {
     return {
       error: "Error while generating next question, please try again.",
@@ -182,7 +176,6 @@ export const submitInterviewResponse = async (
 
   const aiContext = chat.getHistory()
 
-  // TODO: do this one in background job
   await prisma.sessionMetadata.update({
     where: { sessionId: interviewId },
     data: {
@@ -191,7 +184,6 @@ export const submitInterviewResponse = async (
         .map(content => JSON.parse(JSON.stringify(content)))
     }
   }).catch(err => {
-    console.error("Error updating session metadata:", err);
     return null;
   })
 
@@ -213,8 +205,6 @@ export const submitInterviewResponse = async (
     })
 
     const aiContext = chat.getHistory()
-
-    // TODO: do this one in background job
     await prisma.sessionMetadata.update({
       where: { sessionId: interviewId },
       data: {
@@ -223,7 +213,6 @@ export const submitInterviewResponse = async (
           .map(content => JSON.parse(JSON.stringify(content)))
       }
     }).catch(err => {
-      console.error("Error updating session metadata:", err);
       return null;
     })
 
@@ -264,6 +253,14 @@ export const submitInterviewResponse = async (
   }
 
   const question = await pushInterviewQuestion(interviewId, nextQuestionData)
+
+  if (!question) {
+    return {
+      error: "Failed to save question",
+      question: null,
+      closing: null
+    }
+  }
 
   return {
     error: null,
@@ -321,7 +318,7 @@ export const nextQuestion = async (interviewId: string) => {
 
   const { data, error: questionError, success } = aiQuestionSchema.safeParse(JSON.parse(nextQuestion.text ?? "{}"))
   if (!data || questionError || !success) {
-    return { data: null, error: "Error while generating next question, please try again." }
+    return { data: null, error: "Error while generating next question, please try again.", end: false }
   }
 
   redisCache.set(
@@ -330,20 +327,26 @@ export const nextQuestion = async (interviewId: string) => {
   )
 
   if (data.endInterview) {
-    await prisma.interviewSession.update({
+    const updatedInterview = await prisma.interviewSession.update({
       where: { id: interviewId },
       data: { status: "COMPLETED" }
-    }).catch(err => {
-      return {
-        data: null,
-        error: null,
-        end: true
-      }
-    });
+    }).catch(err => null);
+
+    if (!updatedInterview) {
+      return { data: null, error: "Failed to update interview status", end: true }
+    }
+
+    return {
+      data: null,
+      error: null,
+      end: true
+    }
   }
 
   const question = await pushInterviewQuestion(interviewId, data)
-
+  if (!question) {
+    return { data: null, error: "Failed to save question", end: false }
+  }
 
   return { data: question, error: null, end: false }
 }

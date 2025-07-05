@@ -1,7 +1,7 @@
 "use client"
 
 import { deleteResume, previewResumeByKey } from "@/actions/resume.action";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Resume } from "@prisma/client";
@@ -10,6 +10,7 @@ import { Download, Trash2, Edit } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ResumePreviewModal } from "@/components/resume/resumePreviewModal";
+import { useRouter } from "next/navigation";
 
 interface CLinkProps extends VariantProps<typeof buttonVariants> {
   resumeKey: string; // Changed from 'key' to avoid React key prop conflict
@@ -24,13 +25,11 @@ const ResumePreviewButton = (props: CLinkProps) => {
     try {
       const { signedUrl, error } = await previewResumeByKey(resumeKey);
       if (error || !signedUrl) {
-        toast.error("Failed to preview resume");
-        console.error('Error previewing resume:', error);
-        return;
+        return toast.error("Failed to preview resume");
       }
       window.open(signedUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      console.error('Error opening resume preview:', error);
+      return toast.error('Error opening resume preview:');
     }
   };
 
@@ -49,26 +48,14 @@ const ResumePreviewButton = (props: CLinkProps) => {
 export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  const handlePreviewClick = async () => {
-    try {
-      const { signedUrl, error } = await previewResumeByKey(resume.fileName);
-      if (error || !signedUrl) {
-        console.error('Error previewing resume:', error);
-        return;
-      }
-      window.open(signedUrl, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Error opening resume preview:', error);
-    }
-  };
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleDownloadClick = async () => {
     try {
       const { signedUrl, error } = await previewResumeByKey(resume.fileName);
       if (error || !signedUrl) {
-        console.error('Error fetching download URL:', error);
-        return;
+        return toast.error('Error fetching download URL');
       }
 
       const link = document.createElement('a');
@@ -86,17 +73,20 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
 
   const handleDeleteClick = async () => {
     try {
+      setIsDeleting(true);
       const { success, error } = await deleteResume(resume.id, resume.fileName);
       if (error || !success) {
-        console.error('Error deleting resume:', error);
         toast.error("Failed to delete resume");
-        return;
       }
       setIsDeleteDialogOpen(false);
       toast.success("Resume deleted successfully");
     } catch (error) {
-      console.error('Error deleting resume:', error);
       toast.error("Failed to delete resume");
+    } finally {
+      console.log("Refreshing router after delete");
+      setIsDeleteDialogOpen(false);
+      setIsDeleting(false);
+      router.refresh();
     }
   };
 
@@ -141,10 +131,15 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteClick}
+              onClick={async (e) => {
+                e.preventDefault();
+                await handleDeleteClick();
+                router.refresh();
+              }}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              {isDeleting ? "Deleting..." : "Delete"}
+              <Trash2 className="ml-2 h-4 w-4" />
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

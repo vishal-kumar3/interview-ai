@@ -66,20 +66,18 @@ export async function extractTextFromPDF(filePath: string): Promise<{
           }
 
           if (!finalText) {
-            resolve({
+            return resolve({
               error: 'No text could be extracted from PDF',
               data: null
             });
-            return;
           }
-
-          resolve({
+          return resolve({
             error: null,
             data: finalText
           });
         } catch (error) {
           console.error("Error processing PDF data:", error);
-          resolve({
+          return resolve({
             error: 'Failed to process PDF data',
             data: null
           });
@@ -87,9 +85,10 @@ export async function extractTextFromPDF(filePath: string): Promise<{
       });
 
       pdfParser.loadPDF(filePath);
+      return;
     } catch (error) {
       console.error("Error extracting text from PDF:", error);
-      resolve({
+      return resolve({
         error: 'Failed to extract text from PDF',
         data: null
       });
@@ -114,7 +113,6 @@ export async function parseResumeWithAi(text: string): Promise<{
         data: null
       };
     }
-
     const { data: parsedResponse, error: parseError } = resumeParseJsonSchema.safeParse(JSON.parse(response.parts[0].text as string));
 
     if (parseError || !parsedResponse) {

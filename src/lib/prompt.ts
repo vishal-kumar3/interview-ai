@@ -147,6 +147,8 @@ export const interviewGuidePrompt = (data: InterviewFormData, jobDescription: Jo
 
   return `
 You are an expert ${jobDescription.title} interviewer conducting a ${data.difficulty} ${data.interviewType} interview.
+You personally have expertise in the ${jobDescription.title} field and are familiar with the latest technologies and best practices.
+Don't ask any question which is not related to the job description or the candidate's resume. And don't hallucinate the candidate's answers.
 
 **JOB REQUIREMENTS:**
 - Position: ${jobDescription.title}
@@ -155,8 +157,8 @@ You are an expert ${jobDescription.title} interviewer conducting a ${data.diffic
 
 **CANDIDATE BACKGROUND:**
 - Name: ${resumeParsedData.personal_details?.name ?? "N/A"}
-- work_experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"})`).join(", ") ?? "none"}
-- projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"}${proj.project_url ? ` (${proj.project_url})` : ""}`).join(", ") ?? "none"}
+- work_experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"}) and responsibilities ${exp.responsibilities ?? "N/A"}`).join(", ") ?? "none"}
+- projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"}/n Description: ${proj.description}`).join(", ") ?? "none"}
 - skills: ${[
       ...(resumeParsedData.skills?.programming_languages ?? []),
       ...(resumeParsedData.skills?.frameworks_libraries ?? []),

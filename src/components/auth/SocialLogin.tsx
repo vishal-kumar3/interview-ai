@@ -1,7 +1,5 @@
-// "use client"
-import React from "react";
-import { signIn} from 'next-auth/react'
-import { CardFooter } from "@/components/ui/card";
+"use client"
+import { signIn } from 'next-auth/react'
 import { Button } from "@/components/ui/button";
 import { FcGoogle } from "react-icons/fc";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
@@ -17,26 +15,24 @@ const SocialLogin = () => {
   }
 
   return (
-    <CardFooter className="flex flex-col gap-2">
-      <div className="flex gap-2 w-full">
-        <Button
-          onClick={() => googleAuth()}
-          className="w-full"
-          variant={"outline"}
-          size={"lg"}
-        >
-          <FcGoogle />
-        </Button>
-        <Button
-          onClick={() => githubAuth()}
-          className="w-full"
-          variant={"outline"}
-          size={"lg"}
-        >
-          <GitHubLogoIcon />
-        </Button>
-      </div>
-    </CardFooter>
+    <div className="flex gap-2 items-center justify-center">
+      <Button
+        onClick={() => googleAuth()}
+        className="w-full"
+        variant={"outline"}
+        size={"lg"}
+      >
+        <FcGoogle />
+      </Button>
+      <Button
+        onClick={() => githubAuth()}
+        className="w-full"
+        variant={"outline"}
+        size={"lg"}
+      >
+        <GitHubLogoIcon />
+      </Button>
+    </div>
   );
 };
 

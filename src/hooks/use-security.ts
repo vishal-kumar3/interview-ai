@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 
 interface SecurityOptions {
@@ -14,6 +14,28 @@ export function useSecurity({ sessionId, onMalpractice, onTerminate }: SecurityO
   const [isFullscreen, setIsFullscreen] = useState(false)
   const router = useRouter()
   const warningShown = useRef(false)
+
+  const handleMalpractice = useCallback((type: string) => {
+    const newCount = malpracticeCount + 1
+    setMalpracticeCount(newCount)
+    onMalpractice(type)
+
+    if (newCount === 1) {
+      // toast({
+      //   title: "Warning",
+      //   description: "Please stay focused. Further violations will end the interview.",
+      //   variant: "destructive",
+      // })
+      warningShown.current = true
+    } else if (newCount >= 2) {
+      // toast({
+      //   title: "Interview Terminated",
+      //   description: "Session ended due to multiple security violations.",
+      //   variant: "destructive",
+      // })
+      onTerminate()
+    }
+  }, [malpracticeCount, onMalpractice, onTerminate])
 
   useEffect(() => {
     // Request fullscreen on mount
@@ -90,29 +112,7 @@ export function useSecurity({ sessionId, onMalpractice, onTerminate }: SecurityO
       document.removeEventListener("keydown", handleKeyDown)
       document.removeEventListener("contextmenu", handleContextMenu)
     }
-  }, [])
-
-  const handleMalpractice = (type: string) => {
-    const newCount = malpracticeCount + 1
-    setMalpracticeCount(newCount)
-    onMalpractice(type)
-
-    if (newCount === 1) {
-      // toast({
-      //   title: "Warning",
-      //   description: "Please stay focused. Further violations will end the interview.",
-      //   variant: "destructive",
-      // })
-      warningShown.current = true
-    } else if (newCount >= 2) {
-      // toast({
-      //   title: "Interview Terminated",
-      //   description: "Session ended due to multiple security violations.",
-      //   variant: "destructive",
-      // })
-      onTerminate()
-    }
-  }
+  }, [handleMalpractice])
 
   const requestFullscreen = async () => {
     try {

@@ -62,8 +62,8 @@ export function JobDescriptionPreviewModal({
         parsedData: validatedData,
       })
 
-      if (result.success) {
-        toast.success(result.message)
+      if (result.data) {
+        toast.success("Job Description updated successfully!")
         setOriginalData(data)
         setHasChanges(false)
         onClose()
@@ -541,26 +541,17 @@ export function JobDescriptionPreviewModal({
                 <div>
                   <span className="font-medium text-gray-700">Total Years (Minimum): </span>
                   <EditableField
-                    value={data.experienceRequirements?.totalYears?.minimum}
-                    path="experienceRequirements.totalYears.minimum"
+                    value={data.experienceRequirements?.totalYearsRequired}
+                    path="experienceRequirements.totalYearsRequired"
                     type="number"
                   />
                   <span className="text-gray-500"> years</span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-700">Industry Experience Required: </span>
-                  <EditableField
-                    value={data.experienceRequirements?.industryExperience?.required}
-                    path="experienceRequirements.industryExperience.required"
-                    type="select"
-                    options={['true', 'false']}
-                  />
-                </div>
-                <div>
                   <span className="font-medium text-gray-700">Leadership Required: </span>
                   <EditableField
-                    value={data.experienceRequirements?.leadershipExperience?.required}
-                    path="experienceRequirements.leadershipExperience.required"
+                    value={data.experienceRequirements?.leadershipRequired}
+                    path="experienceRequirements.leadershipRequired"
                     type="select"
                     options={['true', 'false']}
                   />
@@ -571,12 +562,12 @@ export function JobDescriptionPreviewModal({
             {/* Education Requirements */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-3">Education Requirements</h4>
-              <div className="space-y-3 text-sm">
+              {/* <div className="space-y-3 text-sm">
                 <div>
                   <span className="font-medium text-gray-700">Degree Required: </span>
                   <EditableField
-                    value={data.educationRequirements?.degree?.required}
-                    path="educationRequirements.degree.required"
+                    value={data.educationRequirements?.degreeRequired}
+                    path="educationRequirements.degreeRequired"
                     type="select"
                     options={['true', 'false']}
                   />
@@ -596,7 +587,7 @@ export function JobDescriptionPreviewModal({
                   <span className="font-medium text-gray-700">Certifications: </span>
                   <span className="text-gray-600">{data.educationRequirements?.certifications?.length || 0} items</span>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Responsibilities */}

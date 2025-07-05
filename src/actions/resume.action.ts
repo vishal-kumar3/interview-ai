@@ -39,7 +39,6 @@ export const updateResume = async (resumeId: string, data: any) => {
   if (!session?.user) {
     return {
       error: "Unauthorized access. Please log in to update your resume.",
-      success: false,
     };
   }
 
@@ -53,15 +52,12 @@ export const updateResume = async (resumeId: string, data: any) => {
     if (!resume) {
       return {
         error: "Resume not found",
-        success: false,
       };
     }
 
     if (resume.userId !== session.user.id) {
       return {
-        error:
-          "Unauthorized access. You do not have permission to update this resume.",
-        success: false,
+        error: "Unauthorized access. You do not have permission to update this resume.",
       };
     }
 
@@ -73,11 +69,8 @@ export const updateResume = async (resumeId: string, data: any) => {
         );
         data.parsedData = validatedParsedData;
       } catch (zodError) {
-        console.error("Zod validation error:", zodError);
         return {
-          error:
-            "Invalid resume data format. Please check your entries and try again.",
-          success: false,
+          error: "Invalid resume data format. Please check your entries and try again.",
         };
       }
     }
@@ -97,20 +90,16 @@ export const updateResume = async (resumeId: string, data: any) => {
     if (!updatedResume) {
       return {
         error: "Failed to update resume",
-        success: false,
       };
     }
 
     revalidatePath("/resumes");
     return {
-      success: true,
-      message: "Resume updated successfully!",
+      data: true,
     };
   } catch (error) {
-    console.error("Error updating resume:", error);
     return {
       error: "An unexpected error occurred while updating the resume.",
-      success: false,
     };
   }
 };
@@ -121,13 +110,11 @@ export async function uploadResume(formData: FormData) {
   if (!session?.user) {
     return {
       error: "Unauthorized access. Please log in to upload your resume.",
-      message: "User session not found.",
     }
   }
 
   const file = formData.get("file") as File;
   const name = formData.get("name") as string;
-  const isDefault = formData.get("isDefault") === "true";
 
   // save to local
   const { data: filePath, error: saveFileError } = await saveFileToLocal(file);
@@ -144,8 +131,14 @@ export async function uploadResume(formData: FormData) {
       data: null
     };
   }
+  const { data: resumeParseData, error: parseError } = await parseResumeWithAi(text);
+  if (parseError || !resumeParseData) {
+    return {
+      error: "Failed to parse resume with AI.",
+      data: null
+    };
+  }
 
-  const resumeParseData = await parseResumeWithAi(text);
   const { error: uploadError, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
 
   if (uploadError || !data) {
@@ -176,7 +169,10 @@ export async function uploadResume(formData: FormData) {
   }
 
   revalidatePath("/resumes");
-  return { success: true, message: "Resume uploaded successfully!" };
+  return {
+    data: resume,
+    error: null
+  };
 }
 
 export const previewResumeByKey = async (key: string) => {
@@ -185,7 +181,6 @@ export const previewResumeByKey = async (key: string) => {
   signedUrl = await redisCache.get(
     createCacheKey(RedisCachePrefix.RESUME, key)
   )
-  console.log("Cache hit for resume preview:", !!signedUrl);
 
   if (!signedUrl) {
     signedUrl = await previewFile({ key, expiresIn: 3600 });

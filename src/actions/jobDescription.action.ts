@@ -37,7 +37,7 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
   if (!session?.user) {
     return {
       error: "Unauthenticated",
-      data: null,
+      data: false,
     }
   }
 
@@ -49,14 +49,14 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
   if (!jobDescription) {
     return {
       error: "Job Description not found",
-      data: null,
+      data: false,
     }
   }
 
   if (jobDescription.userId !== session.user.id) {
     return {
       error: "Unauthorized",
-      data: null,
+      data: false,
     }
   }
 
@@ -72,11 +72,17 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
     },
   })
 
+  if (!updatedJobDescription) {
+    return {
+      error: "Failed to update job description",
+      data: false,
+    }
+  }
+
   revalidatePath("/job-descriptions")
 
   return {
-    success: true,
-    message: "Job Description updated successfully!",
+    data: true
   }
 }
 
@@ -229,13 +235,11 @@ export const generateJobDescription = async (description: string, title?: string
 
 
   return {
-    success: true,
     data: parsedResponse,
   };
 }
 
 export const parseJobDescriptionWithAi = async (text: string) => {
-
   try {
     const { content: response, error: generatedDescriptionError } = await createGenAIText(
       `Job Description Text: ${text}`,

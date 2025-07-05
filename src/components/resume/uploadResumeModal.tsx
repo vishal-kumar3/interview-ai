@@ -67,7 +67,7 @@ export function UploadResumeModal({ variant = "default" }: UploadResumeModalProp
       if (result.error) {
         toast.error(result.error)
       } else {
-        toast.success(result.data || "Resume uploaded successfully!")
+        toast.success("Resume uploaded successfully!")
         setOpen(false)
         form.reset()
       }

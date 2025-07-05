@@ -218,13 +218,11 @@ export const deleteInterviewSession = async (interviewId: string) => {
   if (!deletedSession) {
     return {
       error: "Session Not Found",
-      message: "The specified interview session does not exist or does not belong to the user.",
     }
   }
   revalidatePath("/dashboard")
   return {
     success: true,
-    message: "Interview session deleted successfully.",
   }
 }
 
@@ -272,7 +270,6 @@ export const endInterviewSession = async (interviewId: string) => {
 
     const aiContext = chat.getHistory()
 
-    // TODO: do this one in background job
     const interviewSessionMetadata = await prisma.sessionMetadata.update({
       where: { sessionId: interviewId },
       data: {
@@ -317,6 +314,13 @@ export const endInterviewSession = async (interviewId: string) => {
     console.error("Error updating interview session status:", err);
     return null;
   });
+
+  if (!updatedInterview) {
+    return {
+      error: "Failed to update interview session",
+      data: null
+    }
+  }
 
   return {
     error: null,
