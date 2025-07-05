@@ -2,7 +2,7 @@
 import { InterviewClient } from "@/components/interview/InterviewClient"
 import { QuestionCard } from "@/components/interview/QuestionCard"
 import { ExtendedInterview, StandardQuestion } from "@/types/interview.types"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { InterviewStatus } from "@prisma/client"
 import { useRouter } from "next/navigation"
 import { generateInitialQuestion, nextQuestion } from "@/actions/chat.action"
@@ -21,7 +21,7 @@ const MainInterviewContent = ({
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const setUnansweredQuestion = () => {
+  const setUnansweredQuestion = useCallback(() => {
     const nextQuestionData = interview.questions.find(q => !q.response)
     if (nextQuestionData) {
       setCurrentQuestion({
@@ -30,9 +30,9 @@ const MainInterviewContent = ({
       return true
     }
     return false
-  }
+  }, [interview.questions])
 
-  const generateNextQuestion = async () => {
+  const generateNextQuestion = useCallback(async () => {
     try {
       setIsGenerating(true)
       setError(null)
@@ -48,7 +48,7 @@ const MainInterviewContent = ({
     } finally {
       setIsGenerating(false)
     }
-  }
+  }, [interview.id])
 
 
   // generate initial question or set unanswered questions.
@@ -71,7 +71,7 @@ const MainInterviewContent = ({
     }
 
     initializeQuestion()
-  }, [interview.id])
+  }, [interview.id, interview.questions.length, interview.status, generateNextQuestion, setUnansweredQuestion, router])
 
   if (error) {
     return (

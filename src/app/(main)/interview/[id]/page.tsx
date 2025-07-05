@@ -38,6 +38,10 @@ export default async function InterviewPage({ params }: InterviewPageProps) {
   }
 
   const interview: ExtendedInterview = interviewData.interview
+  if (interview.status === "COMPLETED") {
+    return redirect(`/interview/${interview.id}/feedback`)
+  }
+
 
   const redisInterviewChatExists = await redisCache.exists(createCacheKey(RedisCachePrefix.INTERVIEW, interview.id))
   if (!redisInterviewChatExists) {

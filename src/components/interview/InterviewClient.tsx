@@ -10,6 +10,7 @@ import { AudioRecording } from "@/hooks/use-audio-recorder"
 import { submitInterviewResponse } from "@/actions/chat.action"
 import { endInterviewSession } from "@/actions/interview.action"
 import Link from "next/link"
+import { toast } from "sonner"
 
 interface InterviewClientProps {
   sessionId: string
@@ -34,6 +35,7 @@ export function InterviewClient({
   const { malpracticeCount } = useSecurity({
     sessionId: sessionId,
     onMalpractice: (type) => {
+      toast.error(`Malpractice detected: ${type}. Please follow the guidelines.`)
     },
     onTerminate: () => {
       // terminateSession()
@@ -48,8 +50,7 @@ export function InterviewClient({
     setShowEndDialog(false)
     const { data, error } = await endInterviewSession(sessionId)
     if (!data || error) {
-      console.error("Error ending interview session:", error)
-      return
+      return toast.error("Error ending interview: " + error)
     }
     setClosingStatement("Thank you for participating in the interview.")
 
@@ -71,7 +72,7 @@ export function InterviewClient({
     )
 
     if (error) {
-      console.error("Error submitting response:", error)
+      toast.error("Error submitting response: " + error)
     }
     else if (question) {
       setQuestion(question)

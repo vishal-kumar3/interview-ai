@@ -19,13 +19,12 @@ export function PreviousInterviews({
 }) {
   const router = useRouter()
   const [filter, setFilter] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<string>("date")
 
   const handleDelete = async (sessionId: string) => {
     try {
-      const { error, message } = await deleteInterviewSession(sessionId)
+      const { error, success } = await deleteInterviewSession(sessionId)
       if (error) return toast.error(error)
-      return toast.success(message)
+      if (success) return toast.success("Interview session deleted successfully.")
     } catch (error) {
       toast.error("Failed to delete interview session")
     }
@@ -33,8 +32,7 @@ export function PreviousInterviews({
 
   const handleResume = async (sessionId: string) => {
     try {
-      // const result = await resumeInterviewSession(sessionId)
-      const result = { success: true, redirectUrl: `/interview/${sessionId}/resume` } // Mocked result for demo
+      const result = { success: true, redirectUrl: `/interview/${sessionId}` }
       if (result.success && result.redirectUrl) {
         router.push(result.redirectUrl)
       }

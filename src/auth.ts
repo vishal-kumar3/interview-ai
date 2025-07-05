@@ -10,6 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/auth/login",
     error: "/auth/error",
   },
+  debug: process.env.NODE_ENV === "development",
   events: {
     async linkAccount({ user }) {
       await prisma.user.update({

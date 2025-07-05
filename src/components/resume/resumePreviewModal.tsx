@@ -60,8 +60,7 @@ export function ResumePreviewModal({
         const errorMessages = validationResult.error.errors.map(err =>
           `${err.path.join('.')}: ${err.message}`
         ).join(', ')
-        toast.error(`Validation error: ${errorMessages}`)
-        return
+        return toast.error(`Validation error: ${errorMessages}`)
       }
 
       // Update in database
@@ -69,16 +68,15 @@ export function ResumePreviewModal({
         parsedData: validationResult.data,
       })
 
-      if (result.error) {
-        toast.error(result.error)
+      if (result.error || !result.data) {
+        return toast.error(result.error)
       } else {
-        toast.success(result.message || "Resume updated successfully!")
+        toast.success("Resume updated successfully!")
         setOriginalData(data)
         setHasChanges(false)
         onClose()
       }
     } catch (error) {
-      console.error("Save error:", error)
       toast.error("Failed to save changes")
     } finally {
       setIsLoading(false)

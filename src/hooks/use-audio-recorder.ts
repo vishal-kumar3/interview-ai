@@ -80,7 +80,6 @@ export function useAudioRecorder() {
       // Start audio level monitoring
       updateAudioLevel()
     } catch (error) {
-      console.error("Error starting recording:", error)
       throw new Error("Could not access microphone. Please check permissions.")
     }
   }, [isRecording])
