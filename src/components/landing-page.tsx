@@ -54,7 +54,7 @@ export default function LandingPage() {
             Success Stories
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
+          <Link href="https://github.com/vishal-kumar3/interview-ai" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
             Star on GitHub
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
@@ -100,7 +100,7 @@ export default function LandingPage() {
                   </span>
                 </h1>
                 <p className="mx-auto max-w-3xl text-xl text-gray-600 md:text-2xl leading-relaxed">
-                  Transform your interview skills with AI-powered practice sessions, get instant expert feedback, and 
+                  Transform your interview skills with AI-powered practice sessions, get instant expert feedback, and
                   boost your confidence. Join thousands who&apos;ve landed their dream jobs with our personalized coaching.
                 </p>
               </div>
@@ -177,7 +177,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Detailed Analytics</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    Track your progress with comprehensive performance metrics, scoring, and AI-driven improvement 
+                    Track your progress with comprehensive performance metrics, scoring, and AI-driven improvement
                     suggestions to accelerate your growth.
                   </p>
                   <div className="w-full h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -191,7 +191,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">Instant Feedback</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    Receive immediate, actionable feedback on your answers powered by advanced natural language 
+                    Receive immediate, actionable feedback on your answers powered by advanced natural language
                     processing to improve in real-time.
                   </p>
                   <div className="w-full h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -205,7 +205,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Flexible Practice</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    Practice anytime, anywhere with our cloud-based platform. No downloads or installations required - 
+                    Practice anytime, anywhere with our cloud-based platform. No downloads or installations required -
                     just pure convenience.
                   </p>
                   <div className="w-full h-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -219,7 +219,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 group-hover:text-pink-600 transition-colors">Industry Specific</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    Choose from hundreds of interview scenarios across different industries and job roles, 
+                    Choose from hundreds of interview scenarios across different industries and job roles,
                     from tech to healthcare to finance.
                   </p>
                   <div className="w-full h-1 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -233,7 +233,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">Progress Tracking</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    Monitor your improvement over time with detailed progress reports, skill assessments, 
+                    Monitor your improvement over time with detailed progress reports, skill assessments,
                     and personalized learning paths.
                   </p>
                   <div className="w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -287,7 +287,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Practice & Record</h3>
                 <p className="text-gray-600 leading-relaxed max-w-sm mx-auto">
-                  Answer interview questions naturally while our advanced AI analyzes your responses for content, 
+                  Answer interview questions naturally while our advanced AI analyzes your responses for content,
                   delivery, tone, and confidence.
                 </p>
                 <div className="w-16 h-1 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -302,7 +302,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">Get Expert Feedback</h3>
                 <p className="text-gray-600 leading-relaxed max-w-sm mx-auto">
-                  Receive detailed feedback with personalized ratings and specific actionable suggestions to dramatically 
+                  Receive detailed feedback with personalized ratings and specific actionable suggestions to dramatically
                   improve your interview performance.
                 </p>
                 <div className="w-16 h-1 bg-gradient-to-r from-green-500 to-green-600 rounded-full mx-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -415,7 +415,7 @@ export default function LandingPage() {
             <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/10 rounded-full blur-xl animate-pulse delay-1000"></div>
             <div className="absolute top-3/4 left-3/4 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse delay-500"></div>
           </div>
-          
+
           <div className="container px-4 md:px-6 mx-auto relative z-10">
             <div className="text-center space-y-10 text-white">
               <div className="space-y-6">
@@ -430,17 +430,17 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row gap-6 justify-center max-w-lg mx-auto">
                 <Link href="/dashboard" className="flex-1">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     className="w-full h-16 bg-white text-blue-600 hover:bg-gray-100 shadow-2xl hover:shadow-3xl font-bold text-lg transition-all duration-300 transform hover:scale-105"
                   >
                     <Sparkles className="mr-3 h-6 w-6" />
                     Start Free Trial
                   </Button>
                 </Link>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+                <Button
+                  size="lg"
+                  variant="outline"
                   className="flex-1 h-16 border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm font-bold text-lg transition-all duration-300 transform hover:scale-105"
                 >
                   Learn More
@@ -478,7 +478,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-gray-400 leading-relaxed">
-                Master your interviews with AI-powered practice and feedback. Transform your career with confidence 
+                Master your interviews with AI-powered practice and feedback. Transform your career with confidence
                 and land your dream job.
               </p>
               <div className="flex space-x-4">
