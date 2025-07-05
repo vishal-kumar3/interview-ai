@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/provider/theme-provider";
 import { Toaster } from "sonner";
 import { Roboto } from 'next/font/google'
+import { Analytics } from "@vercel/analytics/next"
 
 const roboto = Roboto({
   weight: ['400', '700'],
@@ -37,6 +38,7 @@ export default function RootLayout({
           richColors
           position="top-center"
         />
+        <Analytics />
       </body>
     </html>
   );
