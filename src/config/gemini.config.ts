@@ -40,11 +40,17 @@ export const createGenAIText = async (messages: string, systemInstruction: strin
     },
   });
 
-  if (!text.candidates || text.candidates.length === 0) {
-    throw new Error("No candidates returned from Gemini AI");
+  if (!text.candidates || text.candidates.length === 0 || !text.candidates[0].content) {
+    return {
+      error: "No candidates returned from AI model",
+      content: null
+    }
   }
 
-  return text.candidates[0].content;
+  return {
+    error: null,
+    content: text.candidates[0].content
+  }
 }
 
 export const transcriptFromAudio = async (filePath: string, fileType: string | undefined) => {

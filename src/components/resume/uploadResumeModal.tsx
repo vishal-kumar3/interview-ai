@@ -58,18 +58,21 @@ export function UploadResumeModal({ variant = "default" }: UploadResumeModalProp
     setIsLoading(true)
     try {
       const formData = new FormData()
-      formData.append("file", data.file)
       formData.append("name", data.name)
-      formData.append("isDefault", data.isDefault.toString())
+      if (data.file) {
+        formData.append("file", data.file)
+      }
 
       const result = await uploadResume(formData)
-      if (result.success) {
-        toast.success(result.message)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Resume uploaded successfully!")
         setOpen(false)
         form.reset()
       }
     } catch (error) {
-      toast.error("Failed to upload resume")
+      toast.error("An unexpected error occurred")
     } finally {
       setIsLoading(false)
     }

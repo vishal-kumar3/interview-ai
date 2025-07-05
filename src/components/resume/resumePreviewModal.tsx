@@ -55,32 +55,29 @@ export function ResumePreviewModal({
       setIsLoading(true)
 
       // Validate data with Zod schema
-      const validatedData = resumeParseJsonSchema.parse(data)
+      const validationResult = resumeParseJsonSchema.safeParse(data)
+      if (!validationResult.success) {
+        const errorMessages = validationResult.error.errors.map(err =>
+          `${err.path.join('.')}: ${err.message}`
+        ).join(', ')
+        return toast.error(`Validation error: ${errorMessages}`)
+      }
 
       // Update in database
       const result = await updateResume(resume.id, {
-        parsedData: validatedData,
+        parsedData: validationResult.data,
       })
 
-      if (result.success) {
-        toast.success(result.message || "Resume updated successfully!")
+      if (result.error || !result.data) {
+        return toast.error(result.error)
+      } else {
+        toast.success("Resume updated successfully!")
         setOriginalData(data)
         setHasChanges(false)
         onClose()
-      } else {
-        toast.error(result.error || "Failed to update resume")
       }
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.map(err =>
-          `${err.path.join('.')}: ${err.message}`
-        ).join(', ')
-        toast.error(`Validation error: ${errorMessages}`)
-      } else if (error instanceof Error) {
-        toast.error(`Error: ${error.message}`)
-      } else {
-        toast.error("Failed to save changes")
-      }
+      toast.error("Failed to save changes")
     } finally {
       setIsLoading(false)
     }

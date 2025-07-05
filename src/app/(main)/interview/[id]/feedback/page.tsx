@@ -6,11 +6,12 @@ import { LoadingFeedback } from "@/components/feedback/LoadingFeedback"
 import { ErrorFeedback } from "@/components/feedback/ErrorFeedback"
 
 interface ReviewPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ReviewPage({ params }: ReviewPageProps) {
-  const { session, error } = await getInterviewFeedback(params.id)
+  const resolvedParams = await params
+  const { session, error } = await getInterviewFeedback(resolvedParams.id)
 
   if (error) {
     if (error === "Unauthorized access") {
@@ -25,13 +26,12 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
   // Generate overall feedback if it doesn't exist
   // if (!session.interviewFeedback && session.status === "COMPLETED") {
-  //   const { feedback } = await generateOverallInterviewFeedback(params.id)
+  //   const { feedback } = await generateOverallInterviewFeedback(resolvedParams.id)
   //   if (feedback) {
   //     session.interviewFeedback = feedback
   //   }
   // }
 
-  // Calculate session statistics
   const { averageScore, totalQuestions, answeredQuestions } = await calculateSessionStats(session.responses)
 
   return (
@@ -44,14 +44,4 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
       />
     </Suspense>
   )
-}
-
-// Add metadata for better SEO
-export async function generateMetadata({ params }: ReviewPageProps) {
-  const { session } = await getInterviewFeedback(params.id)
-
-  return {
-    title: session ? `Interview Review - ${session.title}` : "Interview Review",
-    description: "Review your interview performance and get detailed feedback on your responses."
-  }
 }

@@ -76,7 +76,6 @@ export const resetPassword = async (password: string, confirmPassword: string, t
 
   if(user.password){
     const isPasswordSame = await bcrypt.compare(password, user.password)
-    console.log("isPasswordSame:- ", isPasswordSame)
     if(isPasswordSame) return { error: "Password cannot be same as previous one!!" }
   }
 

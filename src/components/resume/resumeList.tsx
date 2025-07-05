@@ -7,10 +7,11 @@ import { FileText, Download, Eye, MoreHorizontal, Trash2, Star, Calendar, HardDr
 import prisma from "@/config/prisma.config"
 import { auth } from "@/auth"
 import ResumePreviewButton, { ResumeActionDropdown } from "@/components/resumeClientSide"
+import { redirect } from "next/navigation"
 
 export async function ResumesList() {
   const session = await auth()
-  if (!session?.user) throw new Error("Unauthorized access. Please log in to view your resumes.")
+  if (!session?.user) redirect("/auth/login")
   const resumes = await prisma.resume.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "desc" },

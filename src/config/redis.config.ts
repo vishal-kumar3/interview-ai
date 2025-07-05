@@ -9,6 +9,7 @@ export default redis
 
 export enum RedisCachePrefix {
   INTERVIEW = 'interview_chat',
+  RESUME = 'resume',
 }
 
 export const createCacheKey = (prefix: RedisCachePrefix, id: string) => {
@@ -16,6 +17,8 @@ export const createCacheKey = (prefix: RedisCachePrefix, id: string) => {
 }
 
 export const redisCache = {
+  client: redis,
+
   get: async (key: string) => {
     try {
       const value = await redis.get(key)
@@ -28,7 +31,6 @@ export const redisCache = {
 
   set: async (key: string, value: any, ttl: number = 60*60*12) => {
     try {
-      console.log("chat: ", JSON.stringify(value))
       await redis.set(key, JSON.stringify(value), 'EX', ttl)
     } catch (error) {
       console.error('Error setting to Redis:', error)

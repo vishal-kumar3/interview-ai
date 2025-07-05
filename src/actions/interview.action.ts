@@ -9,6 +9,7 @@ import { overallInterviewFeedbackGeminiSchema, overallInterviewFeedbackSchema, o
 import { InterviewFormData } from "@/schema/interview.schema";
 import { AIQuestionSchema, GeminiQuestionUnionSchema } from "@/schema/question.schema";
 import { ExtendedInterview, StandardQuestion } from "@/types/interview.types";
+import { formatTimeRemaining } from "@/utils/DateTime";
 import { Difficulty, InterviewStatus, InterviewType, SessionMetadata } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
@@ -19,6 +20,30 @@ export const createInterviewSession = async (data: InterviewFormData) => {
     return {
       error: "Unauthorized",
       message: "You must be logged in to create an interview session.",
+    }
+  }
+
+  const totalInterview = await prisma.interviewSession.findMany({
+    where: {
+      userId: session.user.id,
+      createdAt: {
+        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      }
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+    take: 3,
+  })
+
+  if (totalInterview.length >= 3) {
+    const oldestInterview = totalInterview[0];
+    const nextEligibleTime = new Date(oldestInterview.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const daysLeft = formatTimeRemaining(nextEligibleTime);
+
+    return {
+      error: "Limit Reached",
+      message: `You have reached the maximum number of interview sessions allowed in a week. Please try again in ${daysLeft}.`,
     }
   }
 
@@ -184,26 +209,20 @@ export const pushInterviewQuestion = async (interviewId: string, question: AIQue
 }
 
 export const deleteInterviewSession = async (interviewId: string) => {
-  console.log("Deleting interview session with ID:", interviewId)
-  console.log("Interview", await prisma.interviewSession.findUnique({ where: { id: interviewId } }))
-
   const deletedSession = await prisma.interviewSession.delete({
     where: {
       id: interviewId,
     },
   }).catch(err => null)
 
-  console.log("Deleted session:", deletedSession)
   if (!deletedSession) {
     return {
       error: "Session Not Found",
-      message: "The specified interview session does not exist or does not belong to the user.",
     }
   }
   revalidatePath("/dashboard")
   return {
     success: true,
-    message: "Interview session deleted successfully.",
   }
 }
 
@@ -231,7 +250,14 @@ export const endInterviewSession = async (interviewId: string) => {
   }
 
   if (!interview.interviewFeedback) {
-    const chat = await getInterviewChatSession(interviewId)
+    const { chat, error: chatError } = await getInterviewChatSession(interviewId)
+
+    if (chatError || !chat) {
+      return {
+        error: "Failed to create chat session",
+        data: null
+      }
+    }
 
     const overallFeedback = await chat.sendMessage({
       message: "Please provide overall feedback for the interview session.",
@@ -244,8 +270,7 @@ export const endInterviewSession = async (interviewId: string) => {
 
     const aiContext = chat.getHistory()
 
-    // TODO: do this one in background job
-    await prisma.sessionMetadata.update({
+    const interviewSessionMetadata = await prisma.sessionMetadata.update({
       where: { sessionId: interviewId },
       data: {
         aiPromptContext: aiContext
@@ -253,9 +278,15 @@ export const endInterviewSession = async (interviewId: string) => {
           .map(content => JSON.parse(JSON.stringify(content)))
       }
     }).catch(err => {
-      console.error("Error updating session metadata:", err);
       return null;
     })
+
+    if (!interviewSessionMetadata) {
+      return {
+        error: "Failed to update session metadata",
+        data: null
+      }
+    }
 
     redisCache.set(
       createCacheKey(RedisCachePrefix.INTERVIEW, interviewId),
@@ -278,11 +309,18 @@ export const endInterviewSession = async (interviewId: string) => {
     where: { id: interviewId },
     data: {
       ...updatedSession
-    }
+    },
   }).catch(err => {
     console.error("Error updating interview session status:", err);
     return null;
   });
+
+  if (!updatedInterview) {
+    return {
+      error: "Failed to update interview session",
+      data: null
+    }
+  }
 
   return {
     error: null,

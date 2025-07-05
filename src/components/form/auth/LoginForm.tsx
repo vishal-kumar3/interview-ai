@@ -1,130 +1,42 @@
 "use client";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import Link from "next/link";
+import { Sparkles, User } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import SocialLogin from "@/components/auth/SocialLogin";
-import ErrorMessage from "@/components/auth/ErrorMessage";
-import SuccessMessage from "@/components/auth/SuccessMessage";
-import { useState } from "react";
-import { login } from "@/actions/auth.action";
-import CardWrapper from "@/components/auth/CardWrapper";
-import { loginFormSchema } from "@/schema/auth.schema";
-import { CustomFormMessage, CustomFormTitleMessage } from "../CustomFormMessage";
+import Link from "next/link";
 
-type props = {};
-
-const LoginForm = (props: props) => {
-  const [error, setError] = useState<string | undefined>("");
-  const [success, setSuccess] = useState<string | undefined>("");
-  const [loadingButton, setLoadingButton] = useState<boolean>(false);
-
-  const form = useForm<z.infer<typeof loginFormSchema>>({
-    resolver: zodResolver(loginFormSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onChange",
-  });
-
-  const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
-    setError("");
-    setSuccess("");
-
-    const res = await login(data);
-    setLoadingButton(true)
-    if(res?.error) setLoadingButton(false)
-    setError(res?.error || "");
-    setSuccess(res?.success || "");
-  };
-
+const LoginForm = () => {
   return (
-    <CardWrapper
-      title="Login"
-      description="Welcome Back!!"
-      backButtonDescription="Don&apos;t have an Account?"
-      backButtonLabel="Sign Up"
-      backButtonHref="/auth/register"
-    >
-      <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <CustomFormTitleMessage title="Email" />
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Enter Your Email..."
-                      disabled={form.formState.isSubmitting || loadingButton}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <CustomFormTitleMessage title="Password" />
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter Your Password..."
-                      disabled={form.formState.isSubmitting || loadingButton}
-                      {...field}
-                    />
-                  </FormControl>
-                  
-                </FormItem>
-              )}
-            />
-            <div>
-              <div className="py-1">
-                <ErrorMessage message={error} />
-                <SuccessMessage message={success} />
-              </div>
-              <Button
-                size="sm"
-                variant="link"
-                asChild
-                className="p-0 font-normal"
-              >
-                <Link href="/auth/reset-password">Forgot Password?</Link>
-              </Button>
-              <Button
-                className="w-full bg-black text-white font-semibold dark:disabled:bg-black/50 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                type="submit"
-                disabled={form.formState.isSubmitting || loadingButton}
-              >
-                Login
-              </Button>
-            </div>
-          </form>
-      </Form>
-    </CardWrapper>
+    <Card className="w-full bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+      <CardHeader className="space-y-6 pb-8">
+        <div className="flex items-center justify-center">
+          <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+        </div>
+        <div className="text-center space-y-3">
+          <CardTitle className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Welcome Back
+          </CardTitle>
+          <CardDescription className="text-gray-500 text-lg max-w-sm mx-auto leading-relaxed">
+            Continue your interview preparation journey with us
+          </CardDescription>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-8 px-8 pb-8">
+        {/* Social Login */}
+        <div className="space-y-4">
+          <SocialLogin />
+        </div>
+        
+        {/* Additional info */}
+        <div className="text-center">
+          <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -83,7 +83,9 @@ export default async function ResumesPage() {
                 <h2 className="text-2xl font-bold text-gray-900">Your Resumes</h2>
                 <p className="text-gray-600">Manage and organize your professional profiles</p>
               </div>
-              <UploadResumeModal />
+              <Suspense fallback={<div className="w-32 h-10 bg-gray-200 animate-pulse rounded-md" />}>
+                <UploadResumeModal />
+              </Suspense>
             </div>
 
             <Suspense fallback={<ResumesSkeleton />}>
@@ -101,7 +103,9 @@ export default async function ResumesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <UploadResumeModal variant="sidebar" />
+                <Suspense fallback={<div className="w-full h-10 bg-gray-200 animate-pulse rounded-md" />}>
+                  <UploadResumeModal variant="sidebar" />
+                </Suspense>
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <Link href="/dashboard">
                     <TrendingUp className="h-4 w-4 mr-2" />

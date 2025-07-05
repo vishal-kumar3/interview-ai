@@ -6,19 +6,19 @@ import { Suspense, useEffect, useState } from "react"
 import {BeatLoader} from "react-spinners"
 import ErrorMessage from "@/components/auth/ErrorMessage"
 import SuccessMessage from "@/components/auth/SuccessMessage"
-import { sendEmailVerificationMail } from "@/lib/nodemailer"
+import { sendVerificationEmail } from "@/lib/nodemailer"
 
 const EmailVerificationForm = ({token}: {token: string | null}) => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
-  
+
   const tokenVerification = async () => {
     if(success || error) return
 
     if(!token) {
       return setError("Missing token!!")
     }
-    
+
     const userVerification = await userEmailVerification(token)
     setError(userVerification.error || "")
     setSuccess(userVerification.success || "")

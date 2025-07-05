@@ -24,25 +24,25 @@ const CardWrapper = ({
   disableSocialLogin=false,
 }: CardWrapperProps) => {
   return (
-  <Card className="w-full">
-    <CardHeader className="flex flex-col justify-center items-center">
+  <Card className="w-full flex justify-center items-center h-full">
+    {/* <CardHeader className="flex flex-col justify-center items-center">
       <CardTitle>{title}</CardTitle>
       <CardDescription>{description}</CardDescription>
     </CardHeader>
     <CardContent>
       {children}
-    </CardContent>
+    </CardContent> */}
     {!disableSocialLogin && <SocialLogin />}
-    <CardFooter className="mx-auto w-fit">
+    {/* <CardFooter className="mx-auto w-fit">
       {backButtonDescription}{" "}
       <Link href={backButtonHref}>
         {
-          backButtonDescription ? 
+          backButtonDescription ?
           <div className="text-blue-500">{backButtonLabel}</div> :
           <Button variant={"ghost"}>{backButtonLabel}</Button>
         }
       </Link>
-    </CardFooter>
+    </CardFooter> */}
   </Card>
   )
 }

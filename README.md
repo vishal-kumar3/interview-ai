@@ -1,24 +1,46 @@
-# AI Interview Platform 🤖💼
+# Interview AI 🤖💼
 
-An intelligent interview preparation platform powered by AI that helps candidates practice and improve their interview skills through realistic simulations, personalized feedback, and comprehensive analysis.
+An intelligent AI-powered interview preparation platform that helps candidates practice and improve their interview skills through realistic simulations, personalized feedback, and comprehensive performance analytics.
 
-## 🌟 Features
+## 📖 Overview
 
-### Core Functionality
-- **AI-Powered Interviews**: Conduct realistic interview sessions with dynamic question generation
-- **Resume Management**: Upload, parse, and analyze resumes with AI extraction
-- **Job Description Processing**: Parse job descriptions to generate targeted interview questions
-- **Real-time Feedback**: Get instant AI feedback on interview responses
-- **Audio Analysis**: Advanced speech analysis including sentiment, pace, and filler word detection
-- **Performance Analytics**: Comprehensive interview performance tracking and insights
+Interview AI is a comprehensive interview preparation platform that leverages artificial intelligence to create realistic interview experiences. The platform analyzes your resume and target job descriptions to generate personalized interview questions, provides real-time feedback on your responses, and tracks your progress over time.
 
-### Advanced Capabilities
-- **Multiple Interview Types**: Technical, behavioral, and mixed interview sessions
-- **Difficulty Levels**: Customizable interview difficulty (Easy, Medium, Hard)
-- **Smart Question Generation**: Context-aware questions based on resume and job requirements
-- **Progress Tracking**: Detailed performance metrics and improvement suggestions
+## ✨ Key Features
 
-## 🛠 Tech Stack
+### 🎯 Smart Interview System
+- **AI-Powered Question Generation**: Dynamic questions based on your resume and job requirements
+- **Multiple Interview Types**: Technical, Behavioral, and Situational interviews
+- **Adaptive Difficulty**: Beginner, Intermediate, and Advanced levels
+- **Follow-up Questions**: Intelligent follow-up questions based on your responses
+- **Real-time Audio Recording**: High-quality audio capture with visual feedback
+
+### 📄 Document Management
+- **Resume Parser**: AI-powered resume analysis and skill extraction
+- **Job Description Analysis**: Intelligent parsing of job requirements and responsibilities
+- **Document Storage**: Secure cloud storage with AWS S3 integration
+- **Multiple Format Support**: PDF parsing and text extraction
+
+### 📊 Performance Analytics
+- **Detailed Feedback**: AI-generated feedback on each response
+- **Performance Scoring**: Comprehensive scoring system with improvement suggestions
+- **Progress Tracking**: Historical performance data and trend analysis
+- **Hire Recommendations**: AI assessment with hiring recommendations
+- **Strengths & Weaknesses**: Detailed analysis of your interview performance
+
+### 🔐 Authentication & Security
+- **NextAuth.js Integration**: Secure authentication with multiple providers
+- **Email Verification**: Account verification system
+- **Password Reset**: Secure password recovery
+- **Role-based Access**: User and admin role management
+
+### 🎨 User Experience
+- **Modern UI/UX**: Clean, responsive design with Tailwind CSS
+- **Real-time Updates**: Live feedback and progress indicators
+- **Audio Playback**: Review your recorded responses
+- **Dashboard Analytics**: Comprehensive overview of your interview history
+
+## 🛠️ Technology Stack
 
 ### Frontend
 - **Next.js 15** - React framework with App Router

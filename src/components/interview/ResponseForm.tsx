@@ -42,9 +42,9 @@ export function ResponseForm({ isSubmitting, onSubmitResponse, onEndInterview, i
 
   const handleAudioSubmit = async () => {
     const fileName = `${Date.now()}`
-    const filePath = await saveBlobToLocal(audioRecording?.blob, fileName)
+    const { data: filePath, error } = await saveBlobToLocal(audioRecording?.blob, fileName)
     if (!audioRecording || !filePath) {
-      return console.error("No audio recording or file path available")
+      return console.error("No audio recording or file path available", error)
     }
 
     onSubmitResponse("", {audio: audioRecording, filePath: filePath})

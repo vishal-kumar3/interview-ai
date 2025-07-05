@@ -37,7 +37,7 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
   if (!session?.user) {
     return {
       error: "Unauthenticated",
-      data: null,
+      data: false,
     }
   }
 
@@ -49,14 +49,14 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
   if (!jobDescription) {
     return {
       error: "Job Description not found",
-      data: null,
+      data: false,
     }
   }
 
   if (jobDescription.userId !== session.user.id) {
     return {
       error: "Unauthorized",
-      data: null,
+      data: false,
     }
   }
 
@@ -72,11 +72,17 @@ export const updateJobDescription = async (jobDescriptionId: string, data: any) 
     },
   })
 
+  if (!updatedJobDescription) {
+    return {
+      error: "Failed to update job description",
+      data: false,
+    }
+  }
+
   revalidatePath("/job-descriptions")
 
   return {
-    success: true,
-    message: "Job Description updated successfully!",
+    data: true
   }
 }
 
@@ -126,7 +132,7 @@ export const deleteJobDescription = async (jobDescriptionId: string) => {
   }
 }
 
-export async function   uploadJobDescription(formData: FormData) {
+export async function uploadJobDescription(formData: FormData) {
   const session = await auth()
 
   if (!session?.user) {
@@ -142,8 +148,21 @@ export async function   uploadJobDescription(formData: FormData) {
   let description = formData.get("description") as string
 
   if (file) {
-    const filePath = await saveFileToLocal(file)
-    description = await extractTextFromPDF(filePath)
+    const { data: filePath, error: saveFileError } = await saveFileToLocal(file)
+    if (saveFileError || !filePath) {
+      return {
+        error: "Failed to save file",
+        data: null,
+      }
+    }
+
+    const { data: description, error: extractError } = await extractTextFromPDF(filePath)
+    if (extractError || !description) {
+      return {
+        error: "Failed to extract text from PDF",
+        data: null,
+      }
+    }
   }
 
   let job_description = ""
@@ -151,7 +170,7 @@ export async function   uploadJobDescription(formData: FormData) {
   if (company) job_description += `Company Name: ${company}\n`
   job_description += `Job Description: ${description}`
 
-  const { data, error} = await parseJobDescriptionWithAi(description)
+  const { data, error } = await parseJobDescriptionWithAi(description)
 
   if (error || !data) {
     return {
@@ -199,12 +218,12 @@ export const generateJobDescription = async (description: string, title?: string
   if (company_name) prompt += `Company Name: ${company_name}\n`
   prompt += `Short Description: ${description}`
 
-  const generatedDescription = await createGenAIText(
+  const { content: generatedDescription, error } = await createGenAIText(
     prompt,
     jobDescriptionGeneratePrompt,
   )
 
-  if (!generatedDescription?.parts || generatedDescription.parts.length === 0) {
+  if (error || !generatedDescription || !generatedDescription?.parts || generatedDescription.parts.length === 0) {
     return {
       error: "Failed to generate job description",
       data: null,
@@ -216,21 +235,19 @@ export const generateJobDescription = async (description: string, title?: string
 
 
   return {
-    success: true,
     data: parsedResponse,
   };
 }
 
 export const parseJobDescriptionWithAi = async (text: string) => {
-
   try {
-    const response = await createGenAIText(
+    const { content: response, error: generatedDescriptionError } = await createGenAIText(
       `Job Description Text: ${text}`,
       jobDescriptionParserPrompt,
       jobDescriptionResponseSchema
     )
 
-    if (!response?.parts) return {
+    if (generatedDescriptionError || !response?.parts) return {
       error: "Failed to parse job description",
       data: null,
     }

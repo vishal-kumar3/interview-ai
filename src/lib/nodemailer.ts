@@ -16,26 +16,25 @@ export const mailOptions = {
 }
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const confirmationUrl = `${host}/auth/verify-email?token=${token}`
+  const confirmationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`
 
   await transporter.sendMail({
     ...mailOptions,
     to: email,
-    subject: 'Confirm your email',
-    text: 'This is string',
+    subject: 'Verify Your Email - Interview AI',
+    text: `Please verify your email by clicking this link: ${confirmationUrl}`,
     html: `
-      <!doctype html>
-      <html ⚡4email>
+      <!DOCTYPE html>
+      <html lang="en">
       <head>
-        <meta charset="utf-8">
-        <style amp4email-boilerplate>body{visibility:hidden}</style>
-        <script async src="https://cdn.ampproject.org/v0.js"></script>
-        <script async custom-element="amp-form" src="https://cdn.ampproject.org/v0/amp-form-0.1.js"></script>
-        <style amp-custom>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+        <style>
           body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             line-height: 1.6;
-            color: #555555;
+            color: #333333;
             margin: 0;
             padding: 0;
             background-color: #f6f9fc;
@@ -51,6 +50,16 @@ export const sendVerificationEmail = async (email: string, token: string) => {
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
           }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f766e;
+            margin-bottom: 10px;
+          }
           h1 {
             color: #333333;
             text-align: center;
@@ -60,26 +69,18 @@ export const sendVerificationEmail = async (email: string, token: string) => {
           }
           .cta-button {
             display: inline-block;
-            background-color: #4CAF50;
+            background-color: #0f766e;
             color: white;
             padding: 14px 28px;
             text-decoration: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-weight: bold;
             font-size: 16px;
             text-align: center;
             margin: 30px 0;
           }
-          .next-steps {
-            background-color: #f8f8f8;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 30px;
-          }
-          .next-steps h2 {
-            color: #333333;
-            font-size: 18px;
-            margin-bottom: 15px;
+          .cta-button:hover {
+            background-color: #0d5d56;
           }
           .footer {
             text-align: center;
@@ -89,34 +90,38 @@ export const sendVerificationEmail = async (email: string, token: string) => {
             border-top: 1px solid #eeeeee;
             padding-top: 30px;
           }
+          .link {
+            color: #0f766e;
+            word-break: break-all;
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="email-body">
-            <amp-img src="${host}/images/devcord_1.jpg" alt="Devcord Logo" width="150" height="50" layout="responsive"></amp-img>
-            <h1>Verify Your Devcord Account</h1>
-            <p>Hello <span id="username">${email}</span>,</p>
-            <p>Welcome to Devcord, the premier chat application for developers. We're thrilled to have you join our community!</p>
-            <p>To get started and unlock all features, please verify your email address:</p>
+            <div class="header">
+              <div class="logo">🎯 Interview AI</div>
+            </div>
+
+            <h1>Verify Your Email Address</h1>
+
+            <p>Hello,</p>
+            <p>Welcome to Interview AI! We're excited to help you ace your next interview.</p>
+            <p>To get started and unlock all features, please verify your email address by clicking the button below:</p>
+
             <div style="text-align: center;">
-              <a href=${confirmationUrl} class="cta-button">Verify Email Now</a>
+              <a href="${confirmationUrl}" class="cta-button">Verify Email Now</a>
             </div>
-            <p>Button not working? Copy and paste this link into your browser:</p>
-            <p id="verificationLinkText" style="word-break: break-all; color: #0066cc;">${confirmationUrl}</p>
-            <div class="next-steps">
-              <h2>What's next?</h2>
-              <ul>
-                <li>Complete your developer profile</li>
-                <li>Join coding channels that interest you</li>
-                <li>Start collaborating with fellow developers</li>
-              </ul>
-            </div>
-            <p>If you didn't create an account on Devcord, please disregard this email.</p>
+
+            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+            <p class="link">${confirmationUrl}</p>
+
+            <p>If you didn't create an account with Interview AI, please ignore this email.</p>
+
             <div class="footer">
               <p>
                 This is an automated message. Please do not reply to this email.<br>
-                If you need assistance, contact our support team at <a href="mailto:kumarvishal823003@gmail.com" style="color: #0066cc;">support@devcord.vercel.app</a>
+                If you need assistance, contact our support team.
               </p>
             </div>
           </div>
