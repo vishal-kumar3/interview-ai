@@ -9,6 +9,7 @@ import { resumeParseJsonSchema } from "@/schema/resume.schema";
 import { revalidatePath } from "next/cache";
 import { EntityType } from "@/types/user.types";
 import { createCacheKey, redisCache, RedisCachePrefix } from "@/config/redis.config";
+import { redirect } from "next/navigation";
 
 export const getResumes = async (userId?: string) => {
   if (!userId) {
@@ -37,9 +38,7 @@ export const updateResume = async (resumeId: string, data: any) => {
   const session = await auth();
 
   if (!session?.user) {
-    return {
-      error: "Unauthorized access. Please log in to update your resume.",
-    };
+    return redirect("/auth/login");;
   }
 
   try {
@@ -105,51 +104,51 @@ export const updateResume = async (resumeId: string, data: any) => {
 };
 
 export async function uploadResume(formData: FormData) {
-  const session = await auth();
+  try {
+    const session = await auth();
 
-  if (!session?.user) {
-    return {
-      error: "Unauthorized access. Please log in to upload your resume.",
+    if (!session?.user) {
+      return {
+        error: "Unauthorized access. Please log in to upload your resume.",
+      }
     }
-  }
 
-  const file = formData.get("file") as File;
-  const name = formData.get("name") as string;
+    const file = formData.get("file") as File;
+    const name = (formData.get("name") as string).trim().replace(/\s+/g, "-").toLowerCase();
 
-  // save to local
-  const { data: filePath, error: saveFileError } = await saveFileToLocal(file);
-  if (saveFileError || !filePath) {
-    return {
-      error: "Failed to save file locally.",
-      data: null
+    // save to local
+    const { data: filePath, error: saveFileError } = await saveFileToLocal(file, name);
+    if (saveFileError || !filePath) {
+      return {
+        error: "Failed to save file locally.",
+        data: null
+      }
     }
-  }
-  const { data: text, error: extractTextError } = await extractTextFromPDF(filePath);
-  if (extractTextError || !text) {
-    return {
-      error: "Failed to extract text from PDF.",
-      data: null
-    };
-  }
-  const { data: resumeParseData, error: parseError } = await parseResumeWithAi(text);
-  if (parseError || !resumeParseData) {
-    return {
-      error: "Failed to parse resume with AI.",
-      data: null
-    };
-  }
+    const { data: text, error: extractTextError } = await extractTextFromPDF(filePath);
+    if (extractTextError || !text) {
+      return {
+        error: "Failed to extract text from PDF.",
+        data: null
+      };
+    }
+    const { data: resumeParseData, error: parseError } = await parseResumeWithAi(text);
+    if (parseError || !resumeParseData) {
+      return {
+        error: "Failed to parse resume with AI.",
+        data: null
+      };
+    }
 
-  const { error: uploadError, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
+    const { error: uploadError, data } = await fileToS3(filePath, name ?? file.name, EntityType.RESUME);
 
-  if (uploadError || !data) {
-    return {
-      error: "Failed to upload resume file to S3.",
-      data: null
-    };
-  }
+    if (uploadError || !data) {
+      return {
+        error: "Failed to upload resume file to S3.",
+        data: null
+      };
+    }
 
-  const resume = await prisma.resume.create({
-    data: {
+    const hollaData = {
       fileName: data.key,
       fileUrl: data.fileUrl,
       parsedData: resumeParseData,
@@ -158,27 +157,47 @@ export async function uploadResume(formData: FormData) {
           id: session.user.id,
         },
       },
-    },
-  });
+    }
+    console.log("Holla Data:", hollaData);
 
-  if (!resume) {
+    const resume = await prisma.resume.create({
+      data: {
+        fileName: data.key,
+        fileUrl: data.fileUrl,
+        parsedData: resumeParseData,
+        user: {
+          connect: {
+            id: session.user.id,
+          },
+        },
+      },
+    });
+
+    if (!resume) {
+      return {
+        error: "Server Error! Try again later.",
+        data: null
+      };
+    }
+
+    revalidatePath("/resumes");
     return {
-      error: "Failed to create resume record in the database.",
+      data: resume,
+      error: null
+    };
+  } catch (error) {
+    console.error("Error uploading resume:", error);
+    return {
+      error: "An unexpected error occurred while uploading the resume.",
       data: null
     };
   }
-
-  revalidatePath("/resumes");
-  return {
-    data: resume,
-    error: null
-  };
 }
 
 export const previewResumeByKey = async (key: string) => {
   let signedUrl = null
 
-  signedUrl = await redisCache.get(
+  signedUrl = await redisCache.getString(
     createCacheKey(RedisCachePrefix.RESUME, key)
   )
 

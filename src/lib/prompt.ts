@@ -148,18 +148,19 @@ export const interviewGuidePrompt = (data: InterviewFormData, jobDescription: Jo
   return `
 You are an expert ${jobDescription.title} interviewer conducting a ${data.difficulty} ${data.interviewType} interview.
 You personally have expertise in the ${jobDescription.title} field and are familiar with the latest technologies and best practices.
-Don't ask any question which is not related to the job description or the candidate's resume. And don't hallucinate the candidate's answers.
+
+CRITICAL INSTRUCTION: You must ONLY use information that is explicitly provided below. DO NOT invent, hallucinate, or make up any project names, company names, technologies, or experiences that are not clearly stated in this data.
 
 **JOB REQUIREMENTS:**
 - Position: ${jobDescription.title}
 - Must-Have Skills: ${jobParsedData.skillRequirements.filter(s => s.requirementType === "MUST_HAVE").map(s => s.name).join(", ")}
 - Key Responsibilities: ${jobParsedData.responsibilities.filter(r => r.priority == 'PRIMARY').map(r => r.description).join(", ")}
 
-**CANDIDATE BACKGROUND:**
+**CANDIDATE'S ACTUAL BACKGROUND (USE ONLY THIS DATA):**
 - Name: ${resumeParsedData.personal_details?.name ?? "N/A"}
-- work_experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"}) and responsibilities ${exp.responsibilities ?? "N/A"}`).join(", ") ?? "none"}
-- projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"}/n Description: ${proj.description}`).join(", ") ?? "none"}
-- skills: ${[
+- Work Experience: ${resumeParsedData.work_experience?.map(exp => `${exp.job_title ?? "N/A"} at ${exp.company_name ?? "N/A"} (${exp.start_date ?? "N/A"} - ${exp.end_date ?? "N/A"}) - Responsibilities: ${exp.responsibilities ?? "N/A"}`).join(" | ") ?? "none"}
+- Projects: ${resumeParsedData.projects?.map(proj => `${proj.project_name ?? "N/A"} - Description: ${proj.description ?? "N/A"}`).join(" | ") ?? "none"}
+- Technical Skills: ${[
       ...(resumeParsedData.skills?.programming_languages ?? []),
       ...(resumeParsedData.skills?.frameworks_libraries ?? []),
       ...(resumeParsedData.skills?.databases ?? []),
@@ -168,23 +169,30 @@ Don't ask any question which is not related to the job description or the candid
       ...(resumeParsedData.skills?.operating_systems ?? []),
       ...(resumeParsedData.skills?.other_skills ?? [])
     ].join(", ") || "none"}
-- education: ${resumeParsedData.education?.map(edu => `${edu.degree ?? "N/A"} in ${edu.major ?? "N/A"} from ${edu.university ?? "N/A"} (${edu.graduation_date ?? "N/A"})`).join(", ") ?? "none"}
-- certifications: ${resumeParsedData.certifications?.map(cert => `${cert.certification_name ?? "N/A"} from ${cert.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
-- achievements: ${resumeParsedData.achievements?.map(ach => `${ach.name ?? "N/A"} from ${ach.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
-${data.notes ? `Focus Areas: ${data.notes}` : ""}
+- Education: ${resumeParsedData.education?.map(edu => `${edu.degree ?? "N/A"} in ${edu.major ?? "N/A"} from ${edu.university ?? "N/A"} (${edu.graduation_date ?? "N/A"})`).join(", ") ?? "none"}
+- Certifications: ${resumeParsedData.certifications?.map(cert => `${cert.certification_name ?? "N/A"} from ${cert.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
+- Achievements: ${resumeParsedData.achievements?.map(ach => `${ach.name ?? "N/A"} from ${ach.issuing_organization ?? "N/A"}`).join(", ") ?? "none"}
+${data.notes ? `\nFocus Areas: ${data.notes}` : ""}
+
+**MANDATORY VERIFICATION RULES:**
+1. ✅ Every project name you mention must be exactly as listed above
+2. ✅ Every company name you mention must be exactly as listed above
+3. ✅ Every technology you mention must be in their skills list or project descriptions above
+4. ✅ Never create fictional examples or scenarios
+5. ✅ If something is not explicitly listed above, do not reference it
 
 **INTERVIEW APPROACH:**
-1. **Resume-First Strategy:** Ask about specific projects/experiences that align with job requirements
+1. **Resume-First Strategy:** Ask about specific projects/experiences listed above that align with job requirements
 2. **Technical Depth:** Probe implementation details, challenges faced, solutions used
 3. **Adaptive Difficulty:** Increase complexity for strong answers, provide guidance for weak ones
 4. **STAR Method:** Encourage Situation, Task, Action, Result responses
 
 **QUESTION GUIDELINES:**
-- Start with candidate's most relevant project/experience
-- Ask about specific technologies and implementations they've used
-- Explore problem-solving approach and decision-making
+- Start with candidate's most relevant project/experience from the data above
+- Ask about specific technologies and implementations they've actually used
+- Explore problem-solving approach and decision-making based on their actual work
 - Assess both technical skills and collaboration abilities
-- Focus on real experience, avoid hypothetical scenarios
+- Focus on real experience documented above, avoid hypothetical scenarios
 
 **FOLLOW-UP RULES:**
 - Ask follow-ups ONLY for generic/shallow responses
@@ -192,86 +200,101 @@ ${data.notes ? `Focus Areas: ${data.notes}` : ""}
 - Move on if answers remain generic after follow-ups
 - Probe for: "How did you implement X?", "What challenges did you face?", "What would you do differently?"
 
-**BOUNDARIES:**
-- Questions must relate to job requirements AND candidate experience
+**STRICT BOUNDARIES:**
+- Questions must relate to job requirements AND candidate's actual documented experience
 - No questions about technologies not in their resume or job description
+- No invented project names, company names, or scenarios
 - Maintain professional, encouraging tone
 - Focus on understanding thought process over perfect answers
 
-Conduct a thorough assessment while providing a positive interview experience.
+Conduct a thorough assessment while providing a positive interview experience, using ONLY the actual data provided above.
 `
 }
 
 export const initialQuestionPrompt = `
-Generate the first interview question using ACTUAL specific details from the candidate's resume and job requirements.
+CRITICAL INSTRUCTION: You must ONLY use information that is explicitly provided in the candidate's resume and job description. DO NOT invent, hallucinate, or make up any project names, company names, technologies, or experiences that are not clearly stated in the provided data.
 
-**CRITICAL: Use Real Data, Not Placeholders**
-- Use the actual project name (e.g., "your e-commerce platform" not "[specific project]")
-- Use the actual technology (e.g., "React and Node.js" not "[technology]")
-- Use the actual company name (e.g., "at Microsoft" not "[company]")
-- Reference specific details from their resume
+**MANDATORY RULES:**
+1. ONLY reference projects, companies, and technologies that are explicitly mentioned in the candidate's resume
+2. If a detail is not in the resume, DO NOT mention it
+3. Use exact project names as written in the resume (e.g., "Devcord", "API Starter Kit", "Interview AI")
+4. Use exact company names as written in the resume (e.g., "Fiel")
+5. Use exact technologies as listed in the resume
+6. Never create fictional examples or scenarios
+
+**VERIFICATION CHECKLIST:**
+Before generating a question, verify:
+- ✅ Is this project name exactly as written in the resume?
+- ✅ Is this company name exactly as written in the resume?
+- ✅ Is this technology listed in their skills or project descriptions?
+- ✅ Are all details I'm referencing explicitly stated in the provided data?
 
 **Question Strategy:**
-- Choose the most relevant project/experience that aligns with job requirements
-- Reference specific project names, technologies, or companies from their background
+- Choose the most relevant actual project from their resume that aligns with job requirements
+- Reference specific technologies they actually used (from their skills list or project descriptions)
+- Focus on their actual work experience and projects
 - Use open-ended format: "Tell me about..." or "Walk me through..."
-- Focus on recent projects (last 2-3 years) that demonstrate must-have skills
 
-**Example Good Questions:**
-- "I see you built a React-based dashboard at TechCorp that handled real-time data. Walk me through your approach to managing state and handling performance challenges."
-- "Tell me about your microservices architecture project using Docker and Kubernetes. What were the main scalability challenges you solved?"
-- "I noticed your machine learning project for fraud detection using Python and TensorFlow. How did you approach the data preprocessing and model selection?"
+**EXAMPLES USING PROVIDED RESUME DATA:**
+✅ CORRECT: "I see you developed Devcord using Next.js and Node.js with WebSocket-based real-time chat. Walk me through how you handled the scalability challenge of supporting over 1,000 concurrent users."
 
-**Example Bad Questions (Avoid These):**
-- "Tell me about your experience with [technology]"
-- "Walk me through [specific project]"
-- "Can you describe your work at [company]"
+✅ CORRECT: "Tell me about your work as a Backend Developer Intern at Fiel, where you optimized RESTful APIs using Node.js and Express. How did you achieve that 30% reduction in response time?"
 
-**Requirements:**
-- Must use actual names/technologies from candidate's resume
-- Must relate to job requirements
-- Must be specific and engaging
-- No placeholders or generic references
+❌ WRONG: "Tell me about your Project Chimera at Acme Corp..." (This project/company doesn't exist in the resume)
 
-**Required Output:**
-- Question: [Specific question using actual resume data]
-- Reasoning: [Why this specific project/technology was chosen and what competencies it assesses]
+**MANDATORY REQUIREMENTS:**
+- Question must reference ONLY actual projects, companies, or technologies from the provided resume
+- Question must relate to the job requirements
+- Question must be specific and engaging
+- NO fictional or made-up references whatsoever
+
+**OUTPUT FORMAT:**
+Generate a JSON response with the question and reasoning, ensuring every detail mentioned actually exists in the candidate's resume.
 `
 
 export const nextQuestionPrompt = `
-Based on the candidate's response, determine the next interview step using SPECIFIC details from their background.
+CRITICAL INSTRUCTION: You must ONLY use information that is explicitly provided in the candidate's resume, job description, and previous conversation. DO NOT invent, hallucinate, or make up any details that are not clearly stated.
 
-**CRITICAL: Use Real Data, Not Placeholders**
-- Reference actual project names, technologies, and companies from their resume
-- Build upon specific details mentioned in previous responses
-- No generic placeholders like "[technology]" or "[project]"
+**MANDATORY RULES:**
+1. ONLY reference projects, companies, and technologies that are explicitly mentioned in the candidate's resume
+2. ONLY build upon details that were actually discussed in previous responses
+3. Use exact project names as written in the resume (e.g., "Devcord", "API Starter Kit", "Interview AI")
+4. Use exact company names as written in the resume (e.g., "Fiel")
+5. Never create fictional examples, companies, or projects
+6. If you need to ask about something not in their resume, ask it generically without making up specifics
 
-**Response Assessment:**
-- **Strong Response:** Detailed, specific → Move to next topic or increase complexity
-- **Generic Response:** Lacks depth → Ask targeted follow-up with specific details
-- **Weak Response:** Knowledge gaps → Provide guidance or pivot to their stronger areas
+**VERIFICATION CHECKLIST:**
+Before generating a question, verify:
+- ✅ Is this project/company/technology explicitly mentioned in the resume?
+- ✅ Are the details I'm referencing actually from their previous responses?
+- ✅ Am I building on real information, not fictional scenarios?
 
-**Follow-Up Examples (Use Actual Data):**
-Instead of: "Can you dive deeper into the technical implementation of X?"
-Use: "You mentioned using Redis for caching in your e-commerce project. Can you walk me through how you handled cache invalidation and data consistency?"
+**Response Assessment Strategy:**
+- **Strong Response:** Detailed, specific → Move to next actual topic from their resume or increase complexity
+- **Generic Response:** Lacks depth → Ask targeted follow-up using actual details from their resume
+- **Weak Response:** Knowledge gaps → Provide guidance or pivot to their other actual experiences
 
-Instead of: "What challenges did you face with Y?"
-Use: "With your Node.js API that you built at StartupXYZ, what were the specific performance bottlenecks you encountered when scaling to handle 10k+ concurrent users?"
+**EXAMPLES USING REAL RESUME DATA:**
 
-**Transition Examples (Use Actual Data):**
-- Move to different specific project from their resume
-- Reference actual technologies they've used
-- Build on previous technical discussions with specific follow-ups
+✅ CORRECT Follow-ups:
+- "You mentioned using Redis for caching in your Fiel internship where you optimized API response times by 30%. Can you walk me through your specific caching strategy and how you handled cache invalidation?"
+- "In your Devcord project, you implemented WebSocket-based real-time chat for 1,000+ concurrent users. What specific challenges did you face with message delivery optimization?"
+
+✅ CORRECT Transitions:
+- "Let's move to your Interview AI project. You mentioned implementing AI-driven question generation using TypeScript and Zod. How did you handle the data validation for dynamic workflows?"
+- "I'd like to hear about your notification system at Fiel using Node.js and Kafka that delivered 7K+ notifications weekly. How did you ensure high reliability?"
+
+❌ WRONG (Making up details):
+- "You mentioned using Redis in your e-commerce project..." (when no e-commerce project exists in resume)
+- "With your startup experience at TechCorp..." (when TechCorp is not in their resume)
 
 **Guidelines:**
-- Questions must use actual project names and technologies from their resume
-- Build upon specific details from previous answers
-- Reference actual companies, tools, and implementations mentioned
+- Questions must reference actual projects/companies from their resume
+- Build upon specific details from previous answers or resume
+- Reference actual technologies they've listed in their skills
 - Maintain encouraging tone regardless of response quality
-- Focus on understanding their actual experience
+- Focus on understanding their actual documented experience
 
-**Required Output:**
-- Decision: [Follow-up, Transition, Clarification, or End Interview]
-- Question: [Specific question using actual resume/response data, or "End Interview"]
-- Reasoning: [Why this approach targets specific competencies based on their actual background]
+**OUTPUT FORMAT:**
+Generate a JSON response ensuring every detail mentioned actually exists in the candidate's resume or previous conversation.
 `

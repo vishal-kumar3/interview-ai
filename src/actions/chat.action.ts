@@ -11,14 +11,14 @@ import { EntityType } from "@/types/user.types";
 import { fileToS3 } from "@/utils/upload";
 import { GenerateContentConfig, Content } from "@google/genai";
 
-interface RedisChat {
+export interface RedisChat {
   config?: GenerateContentConfig
   history: Content[]
 }
 
 export const createChatFromConfig = async (redisChat: RedisChat) => {
   const chat = await createGenAIChat(
-    redisChat.history,
+    redisChat.history || [],
     redisChat.config?.systemInstruction,
     redisChat.config?.responseSchema
   );
@@ -28,13 +28,15 @@ export const createChatFromConfig = async (redisChat: RedisChat) => {
 
 
 export const generateInitialQuestion = async (interviewId: string) => {
-  const getCacheChat = await redisCache.get(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
+  const getCacheChat = await redisCache.getJson(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
   const chat = await createChatFromConfig(getCacheChat as RedisChat);
 
   const initialQuestion = await chat.sendMessage({
     message: "Please start the interview with first questions.",
     config: {
-      systemInstruction: initialQuestionPrompt,
+      systemInstruction: `${initialQuestionPrompt}
+
+VERIFICATION REMINDER: Before generating any question, verify that every project name, company name, and technology you mention is explicitly stated in the candidate's resume data provided in the main system instruction. Do not invent or hallucinate any details.`,
       responseMimeType: "application/json",
       responseSchema: GeminiQuestionUnionSchema
     }
@@ -69,7 +71,7 @@ export const submitInterviewResponse = async (
     duration: number
   }
 ) => {
-  const getCacheChat = await redisCache.get(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
+  const getCacheChat = await redisCache.getJson(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
   const chat = await createChatFromConfig(getCacheChat as RedisChat);
   let fileUrl = null;
   let responseMetadata = null;
@@ -159,7 +161,9 @@ export const submitInterviewResponse = async (
   const nextQuestion = await chat.sendMessage({
     message: "Based on the response, please go ahead with either a follow-up if required or the next question for the interview. Or if you think the interview is complete, please end the interview.",
     config: {
-      systemInstruction: nextQuestionPrompt,
+      systemInstruction: `${nextQuestionPrompt}
+
+VERIFICATION REMINDER: Before generating any question, verify that every project name, company name, and technology you mention is explicitly stated in the candidate's resume data provided in the main system instruction or in their previous responses. Do not invent or hallucinate any details.`,
       responseMimeType: "application/json",
       responseSchema: GeminiQuestionUnionSchema
     }
@@ -270,7 +274,7 @@ export const submitInterviewResponse = async (
 }
 
 export const getInterviewChatSession = async (interviewId: string) => {
-  const getCacheChat = await redisCache.get(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
+  const getCacheChat = await redisCache.getJson(createCacheKey(RedisCachePrefix.INTERVIEW, interviewId));
 
   if (!getCacheChat) {
     const interviewSession = await prisma.interviewSession.findUnique({

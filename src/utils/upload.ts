@@ -5,14 +5,14 @@ import fs from "fs";
 
 
 
-export const saveFileToLocal = async (file: File): Promise<{
+export const saveFileToLocal = async (file: File, name: string): Promise<{
   error: string | null,
   data: string | null
 }> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const filePath = `./public/temp/${file.name}`;
+    const filePath = `./public/temp/${Date.now()}-${name}`;
     fs.writeFileSync(filePath, buffer);
     return {
       error: null,

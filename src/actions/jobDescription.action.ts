@@ -148,7 +148,7 @@ export async function uploadJobDescription(formData: FormData) {
   let description = formData.get("description") as string
 
   if (file) {
-    const { data: filePath, error: saveFileError } = await saveFileToLocal(file)
+    const { data: filePath, error: saveFileError } = await saveFileToLocal(file, title.trim().replace(/\s+/g, "-").toLowerCase())
     if (saveFileError || !filePath) {
       return {
         error: "Failed to save file",

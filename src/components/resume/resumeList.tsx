@@ -66,26 +66,10 @@ export async function ResumesList() {
                   size="sm"
                   className="hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300"
                 >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Preview
+                  <Eye className="h-4 w-4 mr-1" />
+                  Preview
                 </ResumePreviewButton>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Download
-                </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                    <ResumeActionDropdown resume={resume} />
-                </DropdownMenu>
+                <ResumeActionDropdown resume={resume} />
               </div>
             </div>
           </CardContent>
@@ -98,10 +82,6 @@ export async function ResumesList() {
             <FileText className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No resumes uploaded</h3>
             <p className="text-gray-600 mb-4">Upload your first resume to get started with mock interviews.</p>
-            <Button className="bg-teal-600 hover:bg-teal-700">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Resume
-            </Button>
           </CardContent>
         </Card>
       )}

@@ -1,9 +1,7 @@
 "use client"
 
 import { deleteResume, previewResumeByKey } from "@/actions/resume.action";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Resume } from "@prisma/client";
 import { VariantProps } from "class-variance-authority";
 import { Download, Trash2, Edit } from "lucide-react";
@@ -46,7 +44,6 @@ const ResumePreviewButton = (props: CLinkProps) => {
 }
 
 export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -78,15 +75,11 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
       if (error || !success) {
         toast.error("Failed to delete resume");
       }
-      setIsDeleteDialogOpen(false);
       toast.success("Resume deleted successfully");
     } catch (error) {
       toast.error("Failed to delete resume");
     } finally {
-      console.log("Refreshing router after delete");
-      setIsDeleteDialogOpen(false);
       setIsDeleting(false);
-      router.refresh();
     }
   };
 
@@ -95,62 +88,49 @@ export const ResumeActionDropdown = ({ resume }: { resume: Resume }) => {
   }
 
   return (
-    <>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={handleEdit}>
+    <div>
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={handleEdit}
+          variant="outline"
+          size="sm"
+          className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+        >
           <Edit className="h-4 w-4 mr-2" />
           Edit Details
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleDownloadClick}>
-          <Download className="h-4 w-4 mr-2" />
-          Download
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-red-600"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsDeleteDialogOpen(true);
-          }}
+        </Button>
+        <Button
+          onClick={handleDownloadClick}
+          variant="outline"
+          size="sm"
+          className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
         >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Resume</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete `&quot;`{resume.fileName}`&quot;`? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async (e) => {
-                e.preventDefault();
-                await handleDeleteClick();
-                router.refresh();
-              }}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-              <Trash2 className="ml-2 h-4 w-4" />
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <Download className="h-4 w-4 mr-1" />
+          Download
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={async (e) => {
+            e.preventDefault();
+            await handleDeleteClick();
+          }}
+          className="bg-red-600 hover:bg-red-700"
+        >
+          {
+            isDeleting ?
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              :
+              <Trash2 className="h-4 w-4" />
+          }
+        </Button>
+      </div>
 
       <ResumePreviewModal
         resume={resume}
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
       />
-    </>
+    </div>
   )
 }
 

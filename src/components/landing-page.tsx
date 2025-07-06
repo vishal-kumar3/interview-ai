@@ -20,6 +20,7 @@ import {
   Globe,
 } from "lucide-react"
 import Link from "next/link"
+import { StarFilledIcon } from "@radix-ui/react-icons"
 
 export default function LandingPage() {
   return (
@@ -42,29 +43,26 @@ export default function LandingPage() {
           </span>
         </Link>
         <nav className="ml-auto flex gap-6 sm:gap-8">
-          <Link href="#features" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
+          <Link href="#features" className="text-sm hidden md:block font-medium hover:text-blue-600 transition-colors relative group">
             Features
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="#how-it-works" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
+          <Link href="#how-it-works" className="text-sm hidden md:block font-medium hover:text-blue-600 transition-colors relative group">
             How it Works
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
-          <Link href="#testimonials" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
+          <Link href="#testimonials" className="text-sm hidden md:block font-medium hover:text-blue-600 transition-colors relative group">
             Success Stories
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
           <Link href="https://github.com/vishal-kumar3/interview-ai" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:text-blue-600 transition-colors relative group">
-            Star on GitHub
+            <div className="flex items-center justify-center gap-1">
+              Star on GitHub <StarFilledIcon className="size-5 text-blue-600" />
+            </div>
             <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
           </Link>
         </nav>
-        <div className="ml-8 flex gap-3">
-          <Link href="/auth/login">
-            <Button variant="ghost" size="sm" className="hover:bg-blue-50 transition-colors">
-              Sign In
-            </Button>
-          </Link>
+        <div className="ml-8 hidden md:flex gap-3">
           <Link href="/dashboard">
             <Button
               size="sm"
@@ -438,14 +436,6 @@ export default function LandingPage() {
                     Start Free Trial
                   </Button>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 h-16 border-2 border-white text-white hover:bg-white/20 backdrop-blur-sm font-bold text-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  Learn More
-                  <ArrowRight className="ml-3 h-6 w-6" />
-                </Button>
               </div>
 
               <div className="flex flex-wrap items-center justify-center gap-8 text-blue-100 pt-6">
@@ -482,15 +472,12 @@ export default function LandingPage() {
                 and land your dream job.
               </p>
               <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-gray-800 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors cursor-pointer">
-                  <span className="text-xs font-bold">f</span>
-                </div>
-                <div className="w-8 h-8 bg-gray-800 hover:bg-blue-400 rounded-lg flex items-center justify-center transition-colors cursor-pointer">
-                  <span className="text-xs font-bold">t</span>
-                </div>
-                <div className="w-8 h-8 bg-gray-800 hover:bg-blue-700 rounded-lg flex items-center justify-center transition-colors cursor-pointer">
+                <Link href={process.env.NEXT_GITHUB!} className="w-8 h-8 bg-gray-800 hover:bg-blue-400 rounded-lg flex items-center justify-center transition-colors cursor-pointer">
+                  <span className="text-xs font-bold">g</span>
+                </Link>
+                <Link href={process.env.NEXT_LINKEDIN!} className="w-8 h-8 bg-gray-800 hover:bg-blue-700 rounded-lg flex items-center justify-center transition-colors cursor-pointer">
                   <span className="text-xs font-bold">in</span>
-                </div>
+                </Link>
               </div>
             </div>
 
@@ -515,16 +502,13 @@ export default function LandingPage() {
             <div className="space-y-6">
               <h4 className="font-bold text-lg text-white">Company</h4>
               <div className="space-y-3 text-gray-400">
-                <Link href="#" className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
+                <Link href={process.env.NEXT_ABOUT_ME!} className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
                   About Us
                 </Link>
-                <Link href="#" className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
+                <Link href={process.env.NEXT_BLOG!} className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
                   Blog
                 </Link>
-                <Link href="#" className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
-                  Careers
-                </Link>
-                <Link href="#" className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
+                <Link href={process.env.NEXT_CONTACT!} className="block hover:text-white transition-colors hover:translate-x-1 transform duration-200">
                   Contact
                 </Link>
               </div>

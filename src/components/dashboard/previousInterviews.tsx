@@ -194,10 +194,6 @@ export function PreviousInterviews({
             <Target className="h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No interviews yet</h3>
             <p className="text-gray-600 mb-4">Get started by creating your first mock interview session.</p>
-            <Button className="bg-teal-600 hover:bg-teal-700">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create Interview
-            </Button>
           </CardContent>
         </Card>
       )}
